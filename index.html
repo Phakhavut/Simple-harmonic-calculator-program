@@ -1,0 +1,187 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8"/>
+<title>SHM Web Simulator — Final Ultimate</title>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;margin:18px;background:#f7f9fb;color:#111}
+  h1{margin-bottom:6px}
+  .box{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-bottom:14px}
+  textarea{width:100%;height:200px;font-family:monospace}
+  button{padding:8px 12px;margin:6px;background:#1677ff;color:white;border:none;border-radius:6px;cursor:pointer}
+  .warning{color:#b91c1c;font-weight:700}
+  table{width:100%;border-collapse:collapse}
+  td,th{border:1px solid #e6eef6;padding:6px}
+</style>
+</head>
+<body>
+  <h1>SHM Web Simulator — Final Ultimate</h1>
+
+  <div class="box">
+    <h3>📘 คู่มือการใช้งาน (สรุป)</h3>
+    <p>วิธีใช้งานสั้น ๆ: เลือก <b>system</b> เป็น <code>spring</code> หรือ <code>pendulum</code> → ใส่ <b>states</b> เป็นรายการ JSON (1–4 สภาวะ) → ค่าแต่ละตัวสามารถเป็นตัวเลขหรือ <code>"="</code> เพื่อคงค่าจากสภาวะก่อนหน้า (หรือจากค่าที่จะกำหนดภายหลังจะถูก backfilled)</p>
+    <p>รายการตัวแปรที่รับ: <code>m,k,L,g,sigmaF,x,v,Vmax,a_max,a,KE,PE,E,A,omega,f,T</code></p>
+    <details>
+      <summary>🔍 สูตรสำคัญทั้งหมด (คลิกเพื่อขยาย)</summary>
+      <pre>
+พื้นฐาน:
+  ω = 2π f = 2π / T
+  f = 1 / T
+  a = -ω² x
+
+สปริง:
+  ω = √(k/m)
+  T = 2π √(m/k)
+  ΣF (equilibrium) = k x = m g
+
+ลูกตุ้ม (small-angle):
+  ω = √(g/L)
+  T = 2π √(L/g)
+
+การกระจัดตามเวลา:
+  x(t) = A cos(ω t + φ)  หรือ x(t) = A sin(ω t + φ)
+
+ความเร็ว/ความเร่ง:
+  v = ± ω √(A² - x²)
+  a = -ω² x
+  Vmax = ω A
+  a_max = ω² A
+
+พลังงาน:
+  KE = ½ m v² = ½ m ω² (A² - x²)
+  PE = ½ k x² = ½ m ω² x²
+  E_total = ½ k A² = ½ m ω² A²
+      </pre>
+    </details>
+  </div>
+
+  <div class="box">
+    <h3>🔧 ตัวช่วย (Wizard) — คลิกเพื่อโหลดตัวอย่างโจทย์</h3>
+    <button onclick="loadExample('spring1')">ตัวอย่าง: สปริง (m=2kg → m=0.5kg)</button>
+    <button onclick="loadExample('spring2')">ตัวอย่าง: สปริง (m=0.05kg ยืด 2cm + ดึงเพิ่ม)</button>
+    <button onclick="loadExample('pendulum1')">ตัวอย่าง: ลูกตุ้ม (L=2 → L=8)</button>
+    <button onclick="clearAll()">ล้าง</button>
+  </div>
+
+  <div class="box">
+    <h3>📝 ใส่ข้อมูล (JSON)</h3>
+    <p>รูปแบบตัวอย่าง:</p>
+    <pre>{
+  "system":"spring",
+  "states":[
+    {"m":2,"x":0.1,"g":9.81},
+    {"m":0.5,"x":"=","g":"="}
+  ]
+}</pre>
+    <textarea id="inputJson">{"system":"spring","states":[{"m":2,"x":0.1,"g":9.81},{"m":0.5,"x":"=","g":"="}]}</textarea>
+    <br>
+    <button onclick="send()">คำนวณ</button>
+  </div>
+
+  <div id="result" class="box"></div>
+
+  <div id="plots" class="box"></div>
+
+<script>
+function loadExample(name){
+  let obj;
+  if(name==='spring1'){
+    obj = {"system":"spring","states":[{"m":2,"x":0.1,"g":9.81},{"m":0.5,"x":"=","g":"="}]};
+  } else if(name==='spring2'){
+    obj = {"system":"spring","states":[{"m":0.05,"x":0.02,"g":9.81},{"m":"=","A":0.025,"x":0}]};
+  } else {
+    obj = {"system":"pendulum","states":[{"L":2,"T":2.5},{"L":8,"T":""}]};
+  }
+  document.getElementById('inputJson').value = JSON.stringify(obj,null,2);
+  send();
+}
+
+function clearAll(){
+  document.getElementById('inputJson').value = '';
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('plots').innerHTML = '';
+}
+
+async function send(){
+  try{
+    const payload = JSON.parse(document.getElementById('inputJson').value);
+    const res = await fetch('/solve',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify(payload)});
+    const data = await res.json();
+    renderResult(data);
+  } catch(err){
+    document.getElementById('result').innerHTML = '<div class="warning">Error: '+err+'</div>';
+  }
+}
+
+function renderResult(data){
+  const results = data.results;
+  let html = '';
+  results.forEach((s,i)=>{
+    html += `<h3>สภาวะ ${i+1}</h3>`;
+    html += '<table>';
+    html += '<tr><th>ตัวแปร</th><th>ค่า</th></tr>';
+    for(const k of ["m","k","L","g","sigmaF","x","A","omega","f","T","v","Vmax","a","a_max","KE","PE","E"]){
+      const v = s[k];
+      html += `<tr><td>${k}</td><td>${v===null?'-':v}</td></tr>`;
+    }
+    html += '</table>';
+    if(s.warnings && s.warnings.length){
+      html += `<div class="warning"><b>คำเตือน:</b><br>${s.warnings.join('<br>')}</div>`;
+    }
+    html += `<pre>${s.explanation}</pre>`;
+  });
+
+  document.getElementById('result').innerHTML = html;
+
+  // build plots for first state that has omega & A
+  document.getElementById('plots').innerHTML = '';
+  for(const s of results){
+    if(s.omega && s.A){
+      buildPlots(s);
+      break;
+    }
+  }
+}
+
+function buildPlots(s){
+  const omega = s.omega;
+  const A = s.A;
+  if(!omega || !A) return;
+  const N = 400;
+  const dt = (2*Math.PI/omega) / 100; // sample ~100 pts per period
+  const t = [];
+  const x = [], v = [], a = [];
+  for(let i=0;i<N;i++){
+    const tt = i*dt;
+    t.push(tt);
+    x.push(A*Math.cos(omega*tt));
+    v.push(-A*omega*Math.sin(omega*tt));
+    a.push(-A*omega*omega*Math.cos(omega*tt));
+  }
+
+  // Plotly
+  const plotDiv = document.createElement('div');
+  plotDiv.style.marginTop = '12px';
+  plotDiv.style.height = '360px';
+  plotDiv.id = 'plot_'+Math.random().toString(36).slice(2,9);
+  document.getElementById('plots').appendChild(plotDiv);
+
+  const traces = [
+    {x:t, y:x, name:'x(t)', mode:'lines'},
+    {x:t, y:v, name:'v(t)', mode:'lines', yaxis:'y2'},
+    {x:t, y:a, name:'a(t)', mode:'lines', yaxis:'y3'}
+  ];
+  const layout = {
+    title: 'x(t), v(t), a(t)',
+    xaxis:{title:'t (s)'},
+    yaxis:{title:'x (m)'},
+    yaxis2:{title:'v (m/s)',overlaying:'y',side:'right'},
+    yaxis3:{title:'a (m/s²)',anchor:'free',overlaying:'y',side:'left',position:0.02}
+  };
+  Plotly.newPlot(plotDiv, traces, layout, {responsive:true});
+}
+</script>
+</body>
+</html>
