@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -126,7 +125,7 @@ function generateStates() {
   currentNumStates = num;
   const container = document.getElementById('statesContainer');
   container.innerHTML = '';
-  console.log(`Generating ${num} states...`); // Debug
+  console.log(`Generating ${num} states...`);
   for (let i = 0; i < num; i++) {
     const row = createStateRow(i + 1);
     container.appendChild(row);
@@ -149,17 +148,22 @@ function createStateRow(index) {
     input.id = `state${index}_${key}`;
     input.step = 'any';
     input.value = '';
-    input.oninput = () => { /* Clear checkbox if typing number */ };
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = `eq${index}_${key}`;
     checkbox.onchange = function() {
       if (this.checked) {
         input.value = '=';
-        input.disabled = true; // Prevent editing when =
+        input.disabled = true;
       } else {
         input.value = '';
         input.disabled = false;
+      }
+    };
+    input.oninput = function() {
+      const eq = document.getElementById(`eq${index}_${key}`);
+      if (this.value !== '' && this.value !== '=') {
+        eq.checked = false;
       }
     };
     group.appendChild(label);
@@ -173,7 +177,7 @@ function createStateRow(index) {
 function updateVisibility() {
   const system = document.getElementById('system').value;
   const isSpring = system === 'spring';
-  console.log(`Updating visibility for ${system}`); // Debug
+  console.log(`Updating visibility for ${system}`);
   allVars.forEach(key => {
     for (let i = 1; i <= currentNumStates; i++) {
       const input = document.getElementById(`state${i}_${key}`);
@@ -190,6 +194,7 @@ function updateVisibility() {
 }
 
 function loadExample(name) {
+  console.log(`Loading example: ${name}`);
   let system, numStates, values;
   if (name === 'spring1') {
     system = 'spring'; numStates = 2;
@@ -231,10 +236,12 @@ function loadExample(name) {
       }
     }
   }
-  calculate(); // คำนวณทันที
+  updateVisibility();
+  setTimeout(calculate, 100); // รอ DOM update
 }
 
 function clearAll() {
+  console.log('Clearing all...');
   document.getElementById('system').value = 'spring';
   document.getElementById('numStates').value = '2';
   generateStates();
@@ -264,12 +271,14 @@ function collectData() {
     const state = {};
     allVars.forEach(key => {
       const input = document.getElementById(`state${i}_${key}`);
-      const val = input ? input.value.trim() : '';
-      if (val !== '' && val !== '=') {
-        const num = parseFloat(val);
-        if (!isNaN(num)) state[key] = num;
-      } else if (val === '=') {
-        state[key] = '=';
+      if (input) {
+        const val = input.value.trim();
+        if (val !== '' && val !== '=') {
+          const num = parseFloat(val);
+          if (!isNaN(num)) state[key] = num;
+        } else if (val === '=') {
+          state[key] = '=';
+        }
       }
     });
     states.push(state);
@@ -277,70 +286,7 @@ function collectData() {
   return {system, states};
 }
 
-async function calculate() {
-  try {
-    const payload = collectData();
-    console.log('Sending payload:', payload); // Debug
-    const res = await fetch('/solve', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
-    const data = await res.json();
-    if (data.error) {
-      throw new Error(data.error);
-    }
-    renderResult(data);
-  } catch (err) {
-    console.error('Calculate error:', err); // Debug
-    document.getElementById('result').innerHTML = `<div class="warning">Error: ${err.message}</div>`;
-    document.getElementById('result').style.display = 'block';
-  }
+function exportJson() {
+  const payload = collectData();
+  alert('JSON Payload:\n' + JSON.stringify(payload, null, 2));
 }
-
-function renderResult(data) {
-  const results = data.results;
-  let html = `<h3>ผลลัพธ์</h3>`;
-  results.forEach((s, i) => {
-    html += `<h4>สภาวะ ${i+1}</h4>`;
-    html += '<table><tr><th>ตัวแปร</th><th>ค่า</th></tr>';
-    const displayVars = ['m','k','L','g','sigmaF','x','A','omega','f','T','v','Vmax','a','a_max','KE','PE','E'];
-    displayVars.forEach(k => {
-      const v = s[k];
-      const displayVal = v === null ? '-' : (typeof v === 'number' ? v.toFixed(4) : v);
-      html += `<tr><td>${varLabels[k] || k}</td><td>${displayVal}</td></tr>`;
-    });
-    html += '</table>';
-    if (s.warnings && s.warnings.length > 0) {
-      html += `<div class="warning"><b>คำเตือน:</b><br>${s.warnings.join('<br>')}</div>`;
-    }
-    html += `<pre style="font-size:0.9em;margin-top:8px">${s.explanation}</pre><hr>`;
-  });
-  document.getElementById('result').innerHTML = html;
-  document.getElementById('result').style.display = 'block';
-
-  // Plots
-  const plotsDiv = document.getElementById('plots');
-  plotsDiv.innerHTML = '';
-  plotsDiv.style.display = 'none';
-  for (const s of results) {
-    if (s.omega && s.A) {
-      buildPlots(s);
-      plotsDiv.style.display = 'block';
-      break;
-    }
-  }
-}
-
-function buildPlots(s) {
-  const omega = s.omega;
-  const A = s.A;
-  const N = 400;
-  const period = 2 * Math.PI / omega;
-  const dt = period / 100;
-  const t = [], x = [], v = [], a = [];
-  for (let i = 0; i < N; i++) {
-    const tt
