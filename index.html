@@ -3,26 +3,40 @@
 <html lang="th">
 <head>
 <meta charset="utf-8"/>
-<title>SHM Web Simulator — Final Ultimate</title>
+<title>SHM Web Simulator — ง่ายสุด (Form UI)</title>
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <style>
   body{font-family:Arial,Helvetica,sans-serif;margin:18px;background:#f7f9fb;color:#111}
   h1{margin-bottom:6px}
   .box{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-bottom:14px}
-  textarea{width:100%;height:200px;font-family:monospace}
-  button{padding:8px 12px;margin:6px;background:#1677ff;color:white;border:none;border-radius:6px;cursor:pointer}
+  h3{margin-top:0}
+  label{display:inline-block;width:120px;font-weight:bold}
+  input[type="number"], input[type="text"]{width:80px;padding:4px;border:1px solid #ddd;border-radius:4px}
+  input[type="checkbox"]{width:auto;margin-left:10px}
+  button{padding:8px 12px;margin:4px;background:#1677ff;color:white;border:none;border-radius:6px;cursor:pointer}
+  button:hover{background:#0d5eff}
+  .state-row{margin-bottom:12px;padding:8px;border:1px solid #e6eef6;border-radius:6px;background:#f9fcff}
+  .state-row h4{margin:0 0 8px 0}
+  .var-group{display:inline-block;margin:4px 8px;vertical-align:top}
   .warning{color:#b91c1c;font-weight:700}
-  table{width:100%;border-collapse:collapse}
-  td,th{border:1px solid #e6eef6;padding:6px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  td,th{border:1px solid #e6eef6;padding:6px;text-align:left}
+  th{background:#f0f8ff}
+  #result, #plots{display:none}
+  #plots .plot-div{height:360px;margin-top:12px}
+  select{width:120px;padding:4px}
 </style>
 </head>
 <body>
-  <h1>SHM Web Simulator — Final Ultimate</h1>
+  <h1>SHM Web Simulator — ง่ายสุด (Form UI)</h1>
 
   <div class="box">
     <h3>📘 คู่มือการใช้งาน (สรุป)</h3>
-    <p>วิธีใช้งานสั้น ๆ: เลือก <b>system</b> เป็น <code>spring</code> หรือ <code>pendulum</code> → ใส่ <b>states</b> เป็นรายการ JSON (1–4 สภาวะ) → ค่าแต่ละตัวสามารถเป็นตัวเลขหรือ <code>"="</code> เพื่อคงค่าจากสภาวะก่อนหน้า (หรือจากค่าที่จะกำหนดภายหลังจะถูก backfilled)</p>
-    <p>รายการตัวแปรที่รับ: <code>m,k,L,g,sigmaF,x,v,Vmax,a_max,a,KE,PE,E,A,omega,f,T</code></p>
+    <p>1. เลือก <b>ระบบ</b> (สปริง หรือ ลูกตุ้ม) — ช่อง input บางช่องจะซ่อน/โชว์อัตโนมัติ (เช่น k สำหรับสปริง, L สำหรับลูกตุ้ม).<br>
+    2. เลือก <b>จำนวนสภาวะ</b> (1-4) — จะสร้างแถว input อัตโนมัติ.<br>
+    3. ในแต่ละสภาวะ: ใส่ตัวเลขในช่องที่ต้องการ (หน่วย: m=kg, k=N/m, L=m, g=m/s², x=m, v=m/s, etc.). ถ้าต้องการ <b>คงค่าจากสภาวะก่อน (=)</b> ให้ติ๊ก checkbox ข้างช่องนั้น.<br>
+    4. กด <b>ตัวอย่าง</b> เพื่อโหลดข้อมูลทันที + คำนวณ.<br>
+    5. กด <b>คำนวณ</b> — ผลจะโชว์ตาราง, คำเตือน (ถ้ามี), สูตรอธิบาย, และกราฟ (ถ้ามี ω และ A).</p>
     <details>
       <summary>🔍 สูตรสำคัญทั้งหมด (คลิกเพื่อขยาย)</summary>
       <pre>
@@ -58,130 +72,276 @@
   </div>
 
   <div class="box">
-    <h3>🔧 ตัวช่วย (Wizard) — คลิกเพื่อโหลดตัวอย่างโจทย์</h3>
-    <button onclick="loadExample('spring1')">ตัวอย่าง: สปริง (m=2kg → m=0.5kg)</button>
-    <button onclick="loadExample('spring2')">ตัวอย่าง: สปริง (m=0.05kg ยืด 2cm + ดึงเพิ่ม)</button>
-    <button onclick="loadExample('pendulum1')">ตัวอย่าง: ลูกตุ้ม (L=2 → L=8)</button>
-    <button onclick="clearAll()">ล้าง</button>
+    <h3>🔧 ตัวช่วย (Wizard) — คลิกเพื่อโหลดตัวอย่าง</h3>
+    <button onclick="loadExample('spring1')">สปริง: m=2kg → m=0.5kg (x คง)</button>
+    <button onclick="loadExample('spring2')">สปริง: m=0.05kg, x_eq=0.02m, A=0.025m</button>
+    <button onclick="loadExample('pendulum1')">ลูกตุ้ม: L=2m, T=2.5s → L=8m</button>
+    <button onclick="clearAll()">ล้างทั้งหมด</button>
   </div>
 
   <div class="box">
-    <h3>📝 ใส่ข้อมูล (JSON)</h3>
-    <p>รูปแบบตัวอย่าง:</p>
-    <pre>{
-  "system":"spring",
-  "states":[
-    {"m":2,"x":0.1,"g":9.81},
-    {"m":0.5,"x":"=","g":"="}
-  ]
-}</pre>
-    <textarea id="inputJson">{"system":"spring","states":[{"m":2,"x":0.1,"g":9.81},{"m":0.5,"x":"=","g":"="}]}</textarea>
+    <h3>📝 ใส่ข้อมูล (Form ง่าย ๆ)</h3>
+    <div>
+      <label>ระบบ:</label>
+      <select id="system">
+        <option value="spring">สปริง (Spring)</option>
+        <option value="pendulum">ลูกตุ้ม (Pendulum)</option>
+      </select>
+    </div>
+    <div style="margin:12px 0">
+      <label>จำนวนสภาวะ:</label>
+      <select id="numStates" onchange="generateStates()">
+        <option value="1">1</option>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+      <button onclick="addState()">เพิ่มสภาวะ</button>
+      <button onclick="removeLastState()">ลบสภาวะสุดท้าย</button>
+    </div>
+    <div id="statesContainer"></div>
     <br>
-    <button onclick="send()">คำนวณ</button>
+    <button onclick="calculate()">คำนวณ</button>
+    <button onclick="exportJson()">Export เป็น JSON (ดูโค้ด)</button>
   </div>
 
   <div id="result" class="box"></div>
-
   <div id="plots" class="box"></div>
 
 <script>
-function loadExample(name){
-  let obj;
-  if(name==='spring1'){
-    obj = {"system":"spring","states":[{"m":2,"x":0.1,"g":9.81},{"m":0.5,"x":"=","g":"="}]};
-  } else if(name==='spring2'){
-    obj = {"system":"spring","states":[{"m":0.05,"x":0.02,"g":9.81},{"m":"=","A":0.025,"x":0}]};
-  } else {
-    obj = {"system":"pendulum","states":[{"L":2,"T":2.5},{"L":8,"T":""}]};
+let currentNumStates = 2;
+const varLabels = {
+  m: 'มวล m (kg)', k: 'สปริง k (N/m)', L: 'ความยาว L (m)', g: 'แรงโน้มถ่วง g (m/s²)',
+  sigmaF: 'ΣF (N)', x: 'การกระจัด x (m)', v: 'ความเร็ว v (m/s)', Vmax: 'V_max (m/s)',
+  a_max: 'a_max (m/s²)', a: 'ความเร่ง a (m/s²)', KE: 'KE (J)', PE: 'PE (J)',
+  E: 'พลังงานรวม E (J)', A: 'แอมพลิจูด A (m)', omega: 'ω (rad/s)',
+  f: 'ความถี่ f (Hz)', T: 'รอบ T (s)'
+};
+const allVars = ['m','k','L','g','sigmaF','x','v','Vmax','a_max','a','KE','PE','E','A','omega','f','T'];
+
+function generateStates() {
+  const num = parseInt(document.getElementById('numStates').value);
+  currentNumStates = num;
+  const container = document.getElementById('statesContainer');
+  container.innerHTML = '';
+  for (let i = 0; i < num; i++) {
+    const row = createStateRow(i + 1);
+    container.appendChild(row);
   }
-  document.getElementById('inputJson').value = JSON.stringify(obj,null,2);
-  send();
+  updateVisibility();
 }
 
-function clearAll(){
-  document.getElementById('inputJson').value = '';
-  document.getElementById('result').innerHTML = '';
-  document.getElementById('plots').innerHTML = '';
+function createStateRow(index) {
+  const div = document.createElement('div');
+  div.className = 'state-row';
+  div.innerHTML = `<h4>สภาวะ ${index}</h4>`;
+  allVars.forEach(key => {
+    const group = document.createElement('div');
+    group.className = 'var-group';
+    const label = document.createElement('label');
+    label.textContent = varLabels[key] || key;
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = `state${index}_${key}`;
+    input.step = 'any';
+    input.value = '';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `eq${index}_${key}`;
+    checkbox.onchange = () => { if (checkbox.checked) input.value = '='; else input.value = ''; };
+    group.appendChild(label);
+    group.appendChild(input);
+    group.appendChild(checkbox);
+    div.appendChild(group);
+  });
+  return div;
 }
 
-async function send(){
-  try{
-    const payload = JSON.parse(document.getElementById('inputJson').value);
-    const res = await fetch('/solve',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify(payload)});
-    const data = await res.json();
-    renderResult(data);
-  } catch(err){
-    document.getElementById('result').innerHTML = '<div class="warning">Error: '+err+'</div>';
-  }
-}
-
-function renderResult(data){
-  const results = data.results;
-  let html = '';
-  results.forEach((s,i)=>{
-    html += `<h3>สภาวะ ${i+1}</h3>`;
-    html += '<table>';
-    html += '<tr><th>ตัวแปร</th><th>ค่า</th></tr>';
-    for(const k of ["m","k","L","g","sigmaF","x","A","omega","f","T","v","Vmax","a","a_max","KE","PE","E"]){
-      const v = s[k];
-      html += `<tr><td>${k}</td><td>${v===null?'-':v}</td></tr>`;
+function updateVisibility() {
+  const system = document.getElementById('system').value;
+  const isSpring = system === 'spring';
+  allVars.forEach(key => {
+    for (let i = 1; i <= currentNumStates; i++) {
+      const input = document.getElementById(`state${i}_${key}`);
+      const group = input.parentElement;
+      if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
+        group.style.display = 'none';
+      } else {
+        group.style.display = 'inline-block';
+      }
     }
+  });
+}
+
+function loadExample(name) {
+  let system, numStates, values;
+  if (name === 'spring1') {
+    system = 'spring'; numStates = 2;
+    values = [
+      {m: 2, x: 0.1, g: 9.81},
+      {m: 0.5, x: '='}
+    ];
+  } else if (name === 'spring2') {
+    system = 'spring'; numStates = 2;
+    values = [
+      {m: 0.05, x: 0.02, g: 9.81},
+      {m: '=', A: 0.025, x: 0}
+    ];
+  } else { // pendulum1
+    system = 'pendulum'; numStates = 2;
+    values = [
+      {L: 2, T: 2.5, g: 9.81},
+      {L: 8, T: '='}
+    ];
+  }
+  document.getElementById('system').value = system;
+  document.getElementById('numStates').value = numStates;
+  generateStates();
+  for (let i = 0; i < numStates; i++) {
+    const state = values[i];
+    for (let key in state) {
+      const inputId = `state${i+1}_${key}`;
+      const input = document.getElementById(inputId);
+      const eqId = `eq${i+1}_${key}`;
+      const eq = document.getElementById(eqId);
+      if (state[key] === '=') {
+        input.value = '=';
+        eq.checked = true;
+      } else {
+        input.value = state[key];
+        eq.checked = false;
+      }
+    }
+  }
+  updateVisibility();
+  calculate(); // คำนวณทันที
+}
+
+function clearAll() {
+  generateStates();
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('plots').innerHTML = '';
+  document.getElementById('plots').style.display = 'none';
+}
+
+function addState() {
+  if (currentNumStates < 4) {
+    document.getElementById('numStates').value = ++currentNumStates;
+    generateStates();
+  }
+}
+
+function removeLastState() {
+  if (currentNumStates > 1) {
+    document.getElementById('numStates').value = --currentNumStates;
+    generateStates();
+  }
+}
+
+function collectData() {
+  const system = document.getElementById('system').value;
+  const states = [];
+  for (let i = 1; i <= currentNumStates; i++) {
+    const state = {};
+    allVars.forEach(key => {
+      const input = document.getElementById(`state${i}_${key}`);
+      const val = input.value.trim();
+      if (val !== '' && val !== '=') {
+        state[key] = parseFloat(val);
+      } else if (val === '=') {
+        state[key] = '=';
+      }
+    });
+    states.push(state);
+  }
+  return {system, states};
+}
+
+async function calculate() {
+  try {
+    const payload = collectData();
+    const res = await fetch('/solve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    renderResult(data);
+  } catch (err) {
+    document.getElementById('result').innerHTML = `<div class="warning">Error: ${err.message}</div>`;
+    document.getElementById('result').style.display = 'block';
+  }
+}
+
+function renderResult(data) {
+  const results = data.results;
+  let html = `<h3>ผลลัพธ์</h3>`;
+  results.forEach((s, i) => {
+    html += `<h4>สภาวะ ${i+1}</h4>`;
+    html += '<table><tr><th>ตัวแปร</th><th>ค่า</th></tr>';
+    const displayVars = ['m','k','L','g','sigmaF','x','A','omega','f','T','v','Vmax','a','a_max','KE','PE','E'];
+    displayVars.forEach(k => {
+      const v = s[k];
+      html += `<tr><td>${varLabels[k] || k}</td><td>${v === null ? '-' : v.toFixed ? v.toFixed(4) : v}</td></tr>`;
+    });
     html += '</table>';
-    if(s.warnings && s.warnings.length){
+    if (s.warnings && s.warnings.length > 0) {
       html += `<div class="warning"><b>คำเตือน:</b><br>${s.warnings.join('<br>')}</div>`;
     }
-    html += `<pre>${s.explanation}</pre>`;
+    html += `<pre style="font-size:0.9em">${s.explanation}</pre>`;
   });
-
   document.getElementById('result').innerHTML = html;
+  document.getElementById('result').style.display = 'block';
 
-  // build plots for first state that has omega & A
+  // Plots
   document.getElementById('plots').innerHTML = '';
-  for(const s of results){
-    if(s.omega && s.A){
+  document.getElementById('plots').style.display = 'none';
+  for (const s of results) {
+    if (s.omega && s.A) {
       buildPlots(s);
+      document.getElementById('plots').style.display = 'block';
       break;
     }
   }
 }
 
-function buildPlots(s){
+function buildPlots(s) {
   const omega = s.omega;
   const A = s.A;
-  if(!omega || !A) return;
   const N = 400;
-  const dt = (2*Math.PI/omega) / 100; // sample ~100 pts per period
-  const t = [];
-  const x = [], v = [], a = [];
-  for(let i=0;i<N;i++){
-    const tt = i*dt;
+  const period = 2 * Math.PI / omega;
+  const dt = period / 100;
+  const t = [], x = [], v = [], a = [];
+  for (let i = 0; i < N; i++) {
+    const tt = i * dt;
     t.push(tt);
-    x.push(A*Math.cos(omega*tt));
-    v.push(-A*omega*Math.sin(omega*tt));
-    a.push(-A*omega*omega*Math.cos(omega*tt));
+    x.push(A * Math.cos(omega * tt));
+    v.push(-A * omega * Math.sin(omega * tt));
+    a.push(-A * omega * omega * Math.cos(omega * tt));
   }
 
-  // Plotly
   const plotDiv = document.createElement('div');
-  plotDiv.style.marginTop = '12px';
-  plotDiv.style.height = '360px';
-  plotDiv.id = 'plot_'+Math.random().toString(36).slice(2,9);
+  plotDiv.className = 'plot-div';
+  plotDiv.id = 'plot_' + Math.random().toString(36).slice(2);
   document.getElementById('plots').appendChild(plotDiv);
+  document.getElementById('plots').innerHTML += '<h3>กราฟ: x(t), v(t), a(t)</h3>';
 
   const traces = [
-    {x:t, y:x, name:'x(t)', mode:'lines'},
-    {x:t, y:v, name:'v(t)', mode:'lines', yaxis:'y2'},
-    {x:t, y:a, name:'a(t)', mode:'lines', yaxis:'y3'}
+    {x: t, y: x, name: 'x(t) (m)', mode: 'lines', line: {color: 'blue'}},
+    {x: t, y: v, name: 'v(t) (m/s)', mode: 'lines', yaxis: 'y2', line: {color: 'green'}},
+    {x: t, y: a, name: 'a(t) (m/s²)', mode: 'lines', yaxis: 'y3', line: {color: 'red'}}
   ];
   const layout = {
-    title: 'x(t), v(t), a(t)',
-    xaxis:{title:'t (s)'},
-    yaxis:{title:'x (m)'},
-    yaxis2:{title:'v (m/s)',overlaying:'y',side:'right'},
-    yaxis3:{title:'a (m/s²)',anchor:'free',overlaying:'y',side:'left',position:0.02}
+    title: `กราฟ SHM (ω=${omega.toFixed(2)} rad/s, A=${A.toFixed(3)} m)`,
+    xaxis: {title: 'เวลา t (s)'},
+    yaxis: {title: 'x (m)'},
+    yaxis2: {title: 'v (m/s)', overlaying: 'y', side: 'right'},
+    yaxis3: {title: 'a (m/s²)', overlaying: 'y', side: 'left', position: 0.05}
   };
-  Plotly.newPlot(plotDiv, traces, layout, {responsive:true});
-}
-</script>
-</body>
-</html>
+  Plotly.newPlot(plotDiv, traces, layout, {responsive
