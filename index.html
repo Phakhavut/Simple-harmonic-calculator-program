@@ -1,93 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SHM Solver</title>
+<title>SHM Calculator</title>
 <style>
-input.calculated { background-color: #d0f0d0; } /* คำนวณแล้ว */
-input.new { background-color: #f9f4a8; } /* คำนวณรอบล่าสุด */
+  body { font-family: Arial; margin: 20px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  input { width: 60px; text-align: center; }
 </style>
 </head>
 <body>
-<h2>SHM Solver</h2>
-<p>เลือกระบบ: 
-<select id="system">
-  <option value="spring">Spring</option>
-  <option value="pendulum">Pendulum</option>
-</select>
-<button onclick="addRow()">เพิ่ม State</button>
-<button onclick="calculate()">คำนวณ</button>
-</p>
-<p>คำแนะนำ:  
-- ใส่ค่าเป็นตัวเลขหรือ "=" เพื่อใช้ค่าจาก state ก่อนหน้า  
-- ปล่อยว่างค่าที่ต้องการให้โปรแกรมคำนวณอัตโนมัติ  
-- กด "คำนวณ" เพื่อดูผลลัพธ์ (ค่าที่คำนวณล่าสุดจะเป็นสีเหลือง)</p>
-<table id="table" border="1">
-<tr>
-  <th>m</th><th>k</th><th>L</th><th>g</th><th>sigmaF</th>
-  <th>x</th><th>v</th><th>Vmax</th><th>a_max</th><th>a</th>
-  <th>KE</th><th>PE</th><th>E</th><th>A</th><th>omega</th><th>f</th><th>T</th>
-</tr>
-</table>
+<h2>SHM Calculator</h2>
+
+<form id="shmForm">
+  <table id="shmTable">
+    <thead>
+      <tr>
+        <th>m</th>
+        <th>k / L</th>
+        <th>x</th>
+        <th>v</th>
+        <th>a</th>
+        <th>Vmax</th>
+        <th>a_max</th>
+        <th>KE</th>
+        <th>PE</th>
+        <th>E</th>
+        <th>A</th>
+        <th>ω</th>
+        <th>f</th>
+        <th>T</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input name="m" value="1"></td>
+        <td><input name="k" value="10"></td>
+        <td><input name="x" value="0.1"></td>
+        <td><input name="v" value="0"></td>
+        <td><input name="a" value="="></td>
+        <td><input name="Vmax" value="="></td>
+        <td><input name="a_max" value="="></td>
+        <td><input name="KE" value="="></td>
+        <td><input name="PE" value="="></td>
+        <td><input name="E" value="="></td>
+        <td><input name="A" value="="></td>
+        <td><input name="omega" value="="></td>
+        <td><input name="f" value="="></td>
+        <td><input name="T" value="="></td>
+      </tr>
+      <tr>
+        <td><input name="m" value="2"></td>
+        <td><input name="k" value="20"></td>
+        <td><input name="x" value="0.2"></td>
+        <td><input name="v" value="="></td>
+        <td><input name="a" value="="></td>
+        <td><input name="Vmax" value="="></td>
+        <td><input name="a_max" value="="></td>
+        <td><input name="KE" value="="></td>
+        <td><input name="PE" value="="></td>
+        <td><input name="E" value="="></td>
+        <td><input name="A" value="="></td>
+        <td><input name="omega" value="="></td>
+        <td><input name="f" value="="></td>
+        <td><input name="T" value="="></td>
+      </tr>
+    </tbody>
+  </table>
+  <br>
+  <button type="button" onclick="calculate()">Calculate</button>
+</form>
 
 <script>
-const keys = ["m","k","L","g","sigmaF","x","v","Vmax","a_max","a","KE","PE","E","A","omega","f","T"];
+async function calculate() {
+    const rows = document.querySelectorAll("#shmTable tbody tr");
+    const states = [];
 
-function addRow(){
-  const table = document.getElementById("table");
-  const row = table.insertRow();
-  keys.forEach(k=>{
-    const cell = row.insertCell();
-    const input = document.createElement("input");
-    input.type = "text";
-    cell.appendChild(input);
-  });
-}
+    rows.forEach(row => {
+        const state = {};
+        row.querySelectorAll("input").forEach(input => {
+            state[input.name] = input.value;
+        });
+        states.push(state);
+    });
 
-function calculate(){
-  const table = document.getElementById("table");
-  const states = [];
-  for(let i=1;i<table.rows.length;i++){
-    const row = table.rows[i];
-    const obj = {};
-    for(let j=0;j<keys.length;j++){
-      obj[keys[j]] = row.cells[j].children[0].value.trim();
-    }
-    states.push(obj);
-  }
+    // เรียก API Python (สมมติใช้ fetch / Flask)
+    const response = await fetch("/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system: "spring", states: states })
+    });
+    const data = await response.json();
 
-  fetch('/calculate',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({system:document.getElementById("system").value, states})
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    for(let i=0;i<data.length;i++){
-      const row = table.rows[i+1];
-      for(let j=0;j<keys.length;j++){
-        const cellInput = row.cells[j].children[0];
-        const val = data[i][keys[j]];
-        if(cellInput.value.trim() === "" || cellInput.value.trim() === "="){
-          cellInput.value = val !== null ? Number(val.toFixed(4)) : "";
-          cellInput.classList.add("calculated");
-          cellInput.classList.add("new");
-        } else {
-          cellInput.classList.remove("new");
-          cellInput.classList.add("calculated");
-        }
-      }
-    }
-    // ลบ highlight สีเหลืองหลัง 2 วินาที
-    setTimeout(()=>{
-      for(let i=1;i<table.rows.length;i++){
-        const row = table.rows[i];
-        for(let j=0;j<keys.length;j++){
-          row.cells[j].children[0].classList.remove("new");
-        }
-      }
-    },2000);
-  });
+    // แสดงผลลัพธ์
+    rows.forEach((row, i) => {
+        row.querySelectorAll("input").forEach(input => {
+            input.value = data[i][input.name] !== null ? Number(data[i][input.name].toFixed(4)) : "=";
+        });
+    });
 }
 </script>
 </body>
