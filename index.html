@@ -32,55 +32,6 @@
   <h1>SHM Web Simulator — ง่ายสุด (Form UI)</h1>
 
   <div class="box">
-    <h3>📘 คู่มือการใช้งาน (สรุป)</h3>
-    <p>1. เลือก <b>ระบบ</b> (สปริง หรือ ลูกตุ้ม) — ช่อง input บางช่องจะซ่อน/โชว์อัตโนมัติ (เช่น k สำหรับสปริง, L สำหรับลูกตุ้ม).<br>
-    2. เลือก <b>จำนวนสภาวะ</b> (1-4) — จะสร้างแถว input อัตโนมัติ.<br>
-    3. ในแต่ละสภาวะ: ใส่ตัวเลขในช่องที่ต้องการ (หน่วย: m=kg, k=N/m, L=m, g=m/s², x=m, v=m/s, etc.). ถ้าต้องการ <b>คงค่าจากสภาวะก่อน (=)</b> ให้ติ๊ก checkbox ข้างช่องนั้น (input จะกลายเป็น "=" อัตโนมัติ).<br>
-    4. กด <b>ตัวอย่าง</b> เพื่อโหลดข้อมูลทันที + คำนวณ.<br>
-    5. กด <b>คำนวณ</b> — ผลจะโชว์ตาราง, คำเตือน (ถ้ามี), สูตรอธิบาย, และกราฟ (ถ้ามี ω และ A).</p>
-    <details>
-      <summary>🔍 สูตรสำคัญทั้งหมด (คลิกเพื่อขยาย)</summary>
-      <pre>
-พื้นฐาน:
-  ω = 2π f = 2π / T
-  f = 1 / T
-  a = -ω² x
-
-สปริง:
-  ω = √(k/m)
-  T = 2π √(m/k)
-  ΣF (equilibrium) = k x = m g
-
-ลูกตุ้ม (small-angle):
-  ω = √(g/L)
-  T = 2π √(L/g)
-
-การกระจัดตามเวลา:
-  x(t) = A cos(ω t + φ)  หรือ x(t) = A sin(ω t + φ)
-
-ความเร็ว/ความเร่ง:
-  v = ± ω √(A² - x²)
-  a = -ω² x
-  Vmax = ω A
-  a_max = ω² A
-
-พลังงาน:
-  KE = ½ m v² = ½ m ω² (A² - x²)
-  PE = ½ k x² = ½ m ω² x²
-  E_total = ½ k A² = ½ m ω² A²
-      </pre>
-    </details>
-  </div>
-
-  <div class="box">
-    <h3>🔧 ตัวช่วย (Wizard) — คลิกเพื่อโหลดตัวอย่าง</h3>
-    <button onclick="loadExample('spring1')">สปริง: m=2kg → m=0.5kg (x คง)</button>
-    <button onclick="loadExample('spring2')">สปริง: m=0.05kg, x_eq=0.02m, A=0.025m</button>
-    <button onclick="loadExample('pendulum1')">ลูกตุ้ม: L=2m, T=2.5s → L=8m</button>
-    <button onclick="clearAll()">ล้างทั้งหมด</button>
-  </div>
-
-  <div class="box">
     <h3>📝 ใส่ข้อมูล (Form ง่าย ๆ)</h3>
     <div>
       <label>ระบบ:</label>
@@ -103,7 +54,6 @@
     <div id="statesContainer"></div>
     <br>
     <button onclick="calculate()">คำนวณ</button>
-    <button onclick="exportJson()">Export เป็น JSON (ดูโค้ด)</button>
   </div>
 
   <div id="result" class="box"></div>
@@ -125,7 +75,6 @@ function generateStates() {
   currentNumStates = num;
   const container = document.getElementById('statesContainer');
   container.innerHTML = '';
-  console.log(`Generating ${num} states...`);
   for (let i = 0; i < num; i++) {
     const row = createStateRow(i + 1);
     container.appendChild(row);
@@ -141,13 +90,16 @@ function createStateRow(index) {
   allVars.forEach(key => {
     const group = document.createElement('div');
     group.className = 'var-group';
+
     const label = document.createElement('label');
-    label.textContent = varLabels[key] || key;
+    label.textContent = varLabels[key];
+
     const input = document.createElement('input');
     input.type = 'number';
     input.id = `state${index}_${key}`;
     input.step = 'any';
-    input.value = '';
+    input.value = '';  // เริ่มเป็นช่องว่าง
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = `eq${index}_${key}`;
@@ -160,15 +112,17 @@ function createStateRow(index) {
         input.disabled = false;
       }
     };
+
     input.oninput = function() {
-      const eq = document.getElementById(`eq${index}_${key}`);
       if (this.value !== '' && this.value !== '=') {
-        eq.checked = false;
+        checkbox.checked = false;
       }
     };
+
     group.appendChild(label);
     group.appendChild(input);
     group.appendChild(checkbox);
+
     varsContainer.appendChild(group);
   });
   return div;
@@ -177,7 +131,6 @@ function createStateRow(index) {
 function updateVisibility() {
   const system = document.getElementById('system').value;
   const isSpring = system === 'spring';
-  console.log(`Updating visibility for ${system}`);
   allVars.forEach(key => {
     for (let i = 1; i <= currentNumStates; i++) {
       const input = document.getElementById(`state${i}_${key}`);
@@ -193,27 +146,31 @@ function updateVisibility() {
   });
 }
 
-function loadExample(name) {
-  console.log(`Loading example: ${name}`);
-  let system, numStates, values;
-  if (name === 'spring1') {
-    system = 'spring'; numStates = 2;
-    values = [
-      {m: 2, x: 0.1, g: 9.81},
-      {m: 0.5, x: '='}
-    ];
-  } else if (name === 'spring2') {
-    system = 'spring'; numStates = 2;
-    values = [
-      {m: 0.05, x: 0.02, g: 9.81},
-      {m: '=', A: 0.025, x: 0}
-    ];
-  } else {
-    system = 'pendulum'; numStates = 2;
-    values = [
-      {L: 2, T: 2.5, g: 9.81},
-      {L: 8, T: '='}
-    ];
+// เพิ่ม/ลบ state
+function addState() {
+  if (currentNumStates < 4) {
+    currentNumStates++;
+    const container = document.getElementById('statesContainer');
+    container.appendChild(createStateRow(currentNumStates));
+    document.getElementById('numStates').value = currentNumStates;
+    updateVisibility();
   }
-  document.getElementById('system').value = system;
-  document.getElementBy
+}
+
+function removeLastState() {
+  if (currentNumStates > 1) {
+    const container = document.getElementById('statesContainer');
+    container.removeChild(container.lastChild);
+    currentNumStates--;
+    document.getElementById('numStates').value = currentNumStates;
+  }
+}
+
+// เรียก generateStates() ตอนโหลดหน้า
+window.onload = function() {
+    generateStates();
+};
+
+</script>
+</body>
+</html>
