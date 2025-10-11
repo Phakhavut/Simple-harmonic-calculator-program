@@ -208,7 +208,7 @@ function loadExample(name) {
       {m: 0.05, x: 0.02, g: 9.81},
       {m: '=', A: 0.025, x: 0}
     ];
-  } else { // pendulum1
+  } else {
     system = 'pendulum'; numStates = 2;
     values = [
       {L: 2, T: 2.5, g: 9.81},
@@ -216,77 +216,4 @@ function loadExample(name) {
     ];
   }
   document.getElementById('system').value = system;
-  document.getElementById('numStates').value = numStates;
-  generateStates();
-  for (let i = 0; i < numStates; i++) {
-    const state = values[i];
-    for (let key in state) {
-      const inputId = `state${i+1}_${key}`;
-      const input = document.getElementById(inputId);
-      const eqId = `eq${i+1}_${key}`;
-      const eq = document.getElementById(eqId);
-      if (state[key] === '=') {
-        input.value = '=';
-        eq.checked = true;
-        input.disabled = true;
-      } else {
-        input.value = state[key];
-        eq.checked = false;
-        input.disabled = false;
-      }
-    }
-  }
-  updateVisibility();
-  setTimeout(calculate, 100); // รอ DOM update
-}
-
-function clearAll() {
-  console.log('Clearing all...');
-  document.getElementById('system').value = 'spring';
-  document.getElementById('numStates').value = '2';
-  generateStates();
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('plots').innerHTML = '';
-  document.getElementById('plots').style.display = 'none';
-}
-
-function addState() {
-  if (currentNumStates < 4) {
-    document.getElementById('numStates').value = ++currentNumStates;
-    generateStates();
-  }
-}
-
-function removeLastState() {
-  if (currentNumStates > 1) {
-    document.getElementById('numStates').value = --currentNumStates;
-    generateStates();
-  }
-}
-
-function collectData() {
-  const system = document.getElementById('system').value;
-  const states = [];
-  for (let i = 1; i <= currentNumStates; i++) {
-    const state = {};
-    allVars.forEach(key => {
-      const input = document.getElementById(`state${i}_${key}`);
-      if (input) {
-        const val = input.value.trim();
-        if (val !== '' && val !== '=') {
-          const num = parseFloat(val);
-          if (!isNaN(num)) state[key] = num;
-        } else if (val === '=') {
-          state[key] = '=';
-        }
-      }
-    });
-    states.push(state);
-  }
-  return {system, states};
-}
-
-function exportJson() {
-  const payload = collectData();
-  alert('JSON Payload:\n' + JSON.stringify(payload, null, 2));
-}
+  document.getElementBy
