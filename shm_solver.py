@@ -41,6 +41,15 @@ def finalize_state(s, system_type):
     """
     for _ in range(8):
         # omega จาก T, f, k/m, g/L
+        # สำหรับระบบลูกตุ้ม (pendulum)
+if system_type == 2:
+    # ถ้า L ยังไม่มี แต่มี g และ omega
+    if s.get("L") is None and s.get("g") not in (None, 0) and s.get("omega") not in (None, 0):
+        s["L"] = safe_div(s["g"], s["omega"]**2)
+    # หรือถ้ามี g และ T
+    if s.get("L") is None and s.get("g") not in (None, 0) and s.get("T") not in (None, 0):
+        s["L"] = s["g"] * (s["T"] / (2 * math.pi))**2
+
         if s.get("omega") is None:
             if s.get("T") not in (None, 0):
                 s["omega"] = 2 * math.pi / s["T"]
@@ -155,3 +164,4 @@ if __name__ == "__main__":
         {"m":0.5,"x":"="}
     ]
     print(json.dumps(process_states(example, "spring"), indent=2))
+
