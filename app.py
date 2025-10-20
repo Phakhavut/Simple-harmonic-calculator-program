@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import math
 import copy
 
@@ -36,6 +36,7 @@ def safe_div(num, den):
 
 def finalize_state(s, system_type):
     for _ in range(8):
+        # คำนวณ omega
         if s.get("omega") is None:
             if s.get("T") not in (None, 0):
                 s["omega"] = 2 * math.pi / s["T"]
@@ -45,11 +46,13 @@ def finalize_state(s, system_type):
                 s["omega"] = safe_sqrt(s["k"]/s["m"])
             elif system_type == 2 and s.get("g") not in (None, 0) and s.get("L") not in (None, 0):
                 s["omega"] = safe_sqrt(s["g"]/s["L"])
+        # sigmaF
         if s.get("sigmaF") is None:
             if system_type == 1 and s.get("k") is not None and s.get("x") is not None:
                 s["sigmaF"] = s["k"] * s["x"]
             elif s.get("m") is not None and s.get("g") is not None:
                 s["sigmaF"] = s["m"] * s["g"]
+        # คำนวณค่าต่าง ๆ ตามสูตร
         if system_type == 1:
             if s.get("k") is None and s.get("m") not in (None,0) and s.get("omega") not in (None,0):
                 s["k"] = s["m"] * s["omega"]**2
@@ -66,19 +69,11 @@ def finalize_state(s, system_type):
                 s["A"] = safe_div(s["a_max"], s["omega"]**2)
             elif s.get("E") is not None and s.get("k") not in (None,0):
                 s["A"] = safe_sqrt(2*s["E"]/s["k"])
-            elif s.get("E") is not None and s.get("m") not in (None,0) and s.get("omega") not in (None,0):
-                s["A"] = safe_sqrt(2*s["E"]/(s["m"]*s["omega"]**2))
         if s.get("v") is None:
             if s.get("omega") not in (None,0) and s.get("A") is not None and s.get("x") is not None:
                 val = s["omega"]**2 * (s["A"]**2 - s["x"]**2)
                 if val >= 0:
                     s["v"] = safe_sqrt(val)
-            elif s.get("KE") is not None and s.get("m") not in (None,0):
-                s["v"] = safe_sqrt(2*s["KE"]/s["m"])
-            elif s.get("E") is not None and s.get("PE") is not None and s.get("m") not in (None,0):
-                ke = s["E"] - s["PE"]
-                if ke >= 0:
-                    s["v"] = safe_sqrt(2*ke/s["m"])
         if s.get("Vmax") is None and s.get("omega") not in (None,0) and s.get("A") is not None:
             s["Vmax"] = s["omega"]*s["A"]
         if s.get("a_max") is None and s.get("omega") not in (None,0) and s.get("A") is not None:
@@ -127,17 +122,18 @@ def process_states(raw_states, system="spring"):
         results.append(out)
     return results
 
-@app.route('/')
-def index():
-    return open("index.html").read()
 
-@app.route('/calculate', methods=['POST'])
-def calculate():
+@app.route("/")
+def serve_html():
+    return send_from_directory(".", "index.html")
+
+@app.route("/solve", methods=["POST"])  # ตรงกับ fetch('/solve')
+def solve():
     data = request.get_json()
     system = data.get("system", "spring")
     raw_states = data.get("states", [])
     results = process_states(raw_states, system)
-    return jsonify(results)
+    return jsonify({"system": system, "results": results})
 
 if __name__ == "__main__":
     app.run(debug=True)
