@@ -178,7 +178,7 @@ function calculate() {
         }
         html += `</tr><tr>`;
         for (let key of allVars) {
-          html += `<td>${s[key] !== null ? s[key] : ''}</td>`;
+          html += `<td>${s[key] !== undefined && s[key] !== null ? s[key].toFixed(4) || s[key] : ''}</td>`;
         }
         html += `</tr></table>`;
         if (s.warnings && s.warnings.length > 0) {
@@ -235,5 +235,3 @@ generateStates();
 </script>
 </body>
 </html>
-
-
