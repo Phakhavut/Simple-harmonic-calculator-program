@@ -1,6 +1,7 @@
-# shm_solver.py
+# shm_solver_v2.py
 import math
 import copy
+import re
 
 NUMERIC_KEYS = [
     "m","k","L","g","sigmaF","x","v","Vmax","a_max","a",
@@ -13,6 +14,8 @@ def to_num(val):
     """
     if val is None:
         return None
+    if isinstance(val, (int, float)):
+        return val
     if isinstance(val, str):
         val = val.strip()
         if val == "":
@@ -23,33 +26,50 @@ def to_num(val):
             return float(val)
         except:
             return None
-    return val
+    return None
+
 
 def safe_sqrt(val):
     if val is None or val < 0:
         return None
     return math.sqrt(val)
 
+
 def safe_div(num, den):
     if num is None or den is None or den == 0:
         return None
     return num / den
 
+
+def eval_param(expr, prev_values):
+    """
+    ประเมินนิพจน์ที่อาจมีตัวแปร เช่น '2x', 'x/3', '3*T'
+    ใช้ค่าจาก prev_values ถ้ามี
+    """
+    if expr is None:
+        return None
+    if isinstance(expr, (int, float)):
+        return expr
+    expr = expr.strip()
+    if expr == "":
+        return None
+    # แทนค่าตัวแปรเช่น x, T, m, L ด้วยค่าจาก state ก่อนหน้า
+    for key, val in prev_values.items():
+        if val is not None:
+            expr = re.sub(rf"\b{key}\b", str(val), expr)
+    try:
+        return float(eval(expr, {"__builtins__": {}}))
+    except:
+        return None
+
+
 def finalize_state(s, system_type):
     """
     คำนวณค่าต่างๆของแต่ละ state แบบ iterative
+    system_type: 1 = สปริง, 2 = ลูกตุ้ม
     """
     for _ in range(8):
         # omega จาก T, f, k/m, g/L
-        # สำหรับระบบลูกตุ้ม (pendulum)
-if system_type == 2:
-    # ถ้า L ยังไม่มี แต่มี g และ omega
-    if s.get("L") is None and s.get("g") not in (None, 0) and s.get("omega") not in (None, 0):
-        s["L"] = safe_div(s["g"], s["omega"]**2)
-    # หรือถ้ามี g และ T
-    if s.get("L") is None and s.get("g") not in (None, 0) and s.get("T") not in (None, 0):
-        s["L"] = s["g"] * (s["T"] / (2 * math.pi))**2
-
         if s.get("omega") is None:
             if s.get("T") not in (None, 0):
                 s["omega"] = 2 * math.pi / s["T"]
@@ -123,10 +143,12 @@ if system_type == 2:
             s["T"] = 1/s["f"]
     return s
 
+
 def process_states(raw_states, system="spring"):
     """
     รับ input จาก front-end เป็น list of dict
-    รองรับ '=' เพื่อใช้ค่าจาก state ก่อนหน้า
+    รองรับ '=' และสมการเช่น '2x' 'x/3' '3*T'
+    และใช้ความสัมพันธ์ระหว่างสภาวะ (เช่น การแปรผัน)
     """
     system_type = 1 if system.lower().startswith("s") else 2
     states = []
@@ -135,33 +157,42 @@ def process_states(raw_states, system="spring"):
     for raw in raw_states:
         s = {}
         for k in NUMERIC_KEYS:
-            val = to_num(raw.get(k))
+            raw_val = raw.get(k)
+            val = to_num(raw_val)
             if val == "=":
                 val = prev_values.get(k)
+            elif val is None and isinstance(raw_val, str):
+                val = eval_param(raw_val, prev_values)
             s[k] = val
             if val is not None:
                 prev_values[k] = val
         states.append(s)
 
+    # ทำการคำนวณทีละ state
     results = []
-    for s in states:
+    for i, s in enumerate(states):
         s_copy = copy.deepcopy(s)
         if system_type == 2 and s_copy.get("g") is None:
             s_copy["g"] = 9.81
-        s_fin = finalize_state(s_copy, system_type)
-        # format float
-        out = {}
-        for k in NUMERIC_KEYS:
-            out[k] = s_fin.get(k)
-        results.append(out)
-    return results
 
-# CLI test
-if __name__ == "__main__":
-    import json
-    example = [
-        {"m":2,"x":0.1,"g":9.81},
-        {"m":0.5,"x":"="}
-    ]
-    print(json.dumps(process_states(example, "spring"), indent=2))
+        # ✳️ ตรวจสอบการแปรผันระหว่างสภาวะก่อนหน้า
+        if i > 0:
+            prev = results[-1]
+            if system_type == 2:  # ลูกตุ้ม: T^2 ∝ L
+                if s_copy.get("L") is None and s_copy.get("T") is not None:
+                    s_copy["L"] = prev["L"] * (s_copy["T"]/prev["T"])**2
+                elif s_copy.get("T") is None and s_copy.get("L") is not None:
+                    s_copy["T"] = prev["T"] * math.sqrt(s_copy["L"]/prev["L"])
+            elif system_type == 1:  # สปริง: T^2 ∝ m/k
+                if s_copy.get("T") is None and s_copy.get("m") is not None and s_copy.get("k") is not None:
+                    s_copy["T"] = 2*math.pi*safe_sqrt(s_copy["m"]/s_copy["k"])
+                elif s_copy.get("k") is None and s_copy.get("m") is not None and s_copy.get("T") is not None:
+                    s_copy["k"] = (4*math.pi**2*s_copy["m"])/(s_copy["T"]**2)
+
+        s_fin = finalize_state(s_copy, system_type)
+
+        out = {k: s_fin.get(k) for k in NUMERIC_KEYS}
+        results.append(out)
+
+    return results
 
