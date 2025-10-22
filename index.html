@@ -2,170 +2,220 @@
 <html lang="th">
 <head>
 <meta charset="utf-8"/>
-<title>Simple Harmonic Motion Calculator (Full)</title>
+<title>Simple Harmonic Calculator</title>
 <style>
   body{font-family:Arial,Helvetica,sans-serif;margin:18px;background:#f7f9fb;color:#111}
   h1{margin-bottom:6px}
   .box{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-bottom:14px}
+  h3{margin-top:0}
   label{display:inline-block;width:140px;font-weight:bold;font-size:0.9em}
   input[type="text"]{width:80px;padding:4px;border:1px solid #ddd;border-radius:4px;margin-right:4px}
   button{padding:8px 12px;margin:4px;background:#1677ff;color:white;border:none;border-radius:6px;cursor:pointer}
   button:hover{background:#0d5eff}
+  .state-row{margin-bottom:12px;padding:10px;border:1px solid #e6eef6;border-radius:6px;background:#f9fcff}
   .vars-container{display:flex;flex-wrap:wrap}
   .var-group{display:inline-block;margin:4px 6px;vertical-align:top;min-width:160px}
+  .warning{color:#b91c1c;font-weight:700}
   table{width:100%;border-collapse:collapse;margin-top:8px}
   td,th{border:1px solid #e6eef6;padding:6px;text-align:left}
   th{background:#f0f8ff}
+  #result{display:none}
+  select{width:120px;padding:4px}
   .hidden{display:none !important}
 </style>
 </head>
 <body>
-<h1>📘 Simple Harmonic Motion Calculator</h1>
+  <h1>📘 Simple Harmonic Motion Calculator</h1>
 
-<div class="box">
-  <button onclick="showHelp()">📖 วิธีใช้งาน</button>
-  <button onclick="clearAll()">🧹 ล้างข้อมูล</button>
-</div>
+  <div class="box">
+    <button onclick="showHelp()">📖 ดูวิธีใช้งาน</button>
+    <button onclick="clearAll()">🧹 ล้างทั้งหมด</button>
+  </div>
 
-<div class="box">
-  <h3>🧮 ป้อนค่าที่ทราบ</h3>
-  <div>
-    <label>ระบบ:</label>
-    <select id="system" onchange="updateVisibility()">
-      <option value="spring">สปริง (Spring)</option>
-      <option value="pendulum">ลูกตุ้ม (Pendulum)</option>
-    </select>
-  </div><br>
-  <div id="vars" class="vars-container"></div>
-  <br>
-  <button onclick="calculate()">⚙️ คำนวณ</button>
-</div>
+  <div class="box">
+    <h3>📝 ใส่ข้อมูล</h3>
+    <div>
+      <label>ระบบ:</label>
+      <select id="system" onchange="updateVisibility()">
+        <option value="spring">สปริง (Spring)</option>
+        <option value="pendulum">ลูกตุ้ม (Pendulum)</option>
+      </select>
+    </div>
+    <div id="stateContainer"></div>
+    <br>
+    <button onclick="calculate()">⚙️ คำนวณ</button>
+  </div>
 
-<div id="result" class="box" style="display:none;"></div>
+  <div id="result" class="box"></div>
 
 <script>
-const allVars = ["m","k","L","g","sigmaF","x","v","Vmax","a_max","a",
-  "KE","PE","E","A","omega","f","T","Phi","t"];
-
-const labels = {
-  m:"มวล m (kg)", k:"สปริง k (N/m)", L:"ความยาว L (m)", g:"แรงโน้มถ่วง g (m/s²)",
-  sigmaF:"ΣF (N)", x:"การกระจัด x (m)", v:"ความเร็ว v (m/s)", Vmax:"Vmax (m/s)",
-  a_max:"a_max (m/s²)", a:"ความเร่ง a (m/s²)", KE:"พลังงานจลน์ KE (J)",
-  PE:"พลังงานศักย์ PE (J)", E:"พลังงานรวม E (J)", A:"แอมพลิจูด A (m)",
-  omega:"ความถี่เชิงมุม ω (rad/s)", f:"ความถี่ f (Hz)", T:"คาบ T (s)",
-  Phi:"เฟส Φ (rad)", t:"เวลา t (s)"
+const varLabels = {
+  m: 'มวล m (kg)', 
+  k: 'สปริง k (N/m)', 
+  L: 'ความยาว L (m)', 
+  g: 'แรงโน้มถ่วง g (m/s²)', 
+  sigmaF: 'แรงดึงกลับ F (N)', 
+  x: 'การกระจัด x (m)', 
+  v: 'ความเร็ว v (m/s)', 
+  Vmax: 'ความเร็วสูงสุด Vmax (m/s)', 
+  a_max: 'ความเร่งสูงสุด a_max (m/s²)', 
+  a: 'ความเร่ง a (m/s²)', 
+  KE: 'พลังงานจลน์ KE (J)', 
+  PE: 'พลังงานศักย์ PE (J)', 
+  E: 'พลังงานรวม E (J)', 
+  A: 'แอมพลิจูด A (m)', 
+  omega: 'ความถี่เชิงมุม ω (rad/s)', 
+  f: 'ความถี่ f (Hz)', 
+  T: 'คาบ T (s)', 
+  Phi: 'เฟสทั้งหมด Φ (rad)', 
+  phi: 'เฟสเริ่มต้น φ (rad)', 
+  t: 'เวลา t (s)'
 };
+const allVars = Object.keys(varLabels);
 
-const varsDiv = document.getElementById("vars");
-allVars.forEach(v=>{
-  const g = document.createElement("div");
-  g.className = "var-group";
-  g.innerHTML = `<label>${labels[v]}</label><input id="in_${v}" type="text">`;
-  varsDiv.appendChild(g);
-});
-
-function showHelp(){
-  alert(`📘 วิธีใช้งาน\n\n1️⃣ เลือกระบบ: สปริง หรือ ลูกตุ้ม\n2️⃣ ใส่ค่าที่ทราบ เช่น m, k, L, A, T, t, Φ\n3️⃣ กด "คำนวณ" โปรแกรมจะเติมค่าที่ขาดตามสูตร SHM\n\nสูตรที่ใช้:\n- ω = √(k/m) (สปริง), ω = √(g/L) (ลูกตุ้ม)\n- T = 2π/ω, f = 1/T\n- x = A cos(ωt + Φ)\n- v = -ωA sin(ωt + Φ)\n- a = -ω²A cos(ωt + Φ)\n- KE = ½ m v², PE = ½ k x², E = KE + PE`);
-}
-
-function clearAll(){
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  document.getElementById("result").style.display="none";
-}
-
-function updateVisibility(){
-  const system = document.getElementById("system").value;
-  const isSpring = system==="spring";
-  ["k","L"].forEach(k=>{
-    const el=document.getElementById("in_"+k).parentElement;
-    if(k==="k"&&!isSpring || k==="L"&&isSpring) el.classList.add("hidden");
-    else el.classList.remove("hidden");
+// Create form for input variables
+function createStateRow() {
+  const div = document.createElement('div');
+  div.className = 'state-row';
+  div.innerHTML = `<h4>สภาวะเดียว</h4><div class="vars-container"></div>`;
+  const varsContainer = div.querySelector('.vars-container');
+  allVars.forEach(key => {
+    const group = document.createElement('div');
+    group.className = 'var-group';
+    const label = document.createElement('label');
+    label.textContent = varLabels[key];
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = `state1_${key}`;
+    group.appendChild(label);
+    group.appendChild(input);
+    varsContainer.appendChild(group);
   });
+  return div;
 }
 
-function calculate(){
-  const sys = document.getElementById("system").value;
-  let s = {};
-  allVars.forEach(v=>{
-    const val = parseFloat(document.getElementById("in_"+v).value);
-    if(!isNaN(val)) s[v]=val;
-  });
-
-  // ตั้งค่าเริ่มต้น
-  if(!s.g) s.g=9.81;
-
-  // เริ่ม iterative คำนวณ
-  for(let i=0;i<8;i++){
-    // 1. คาบ / ความถี่ / ω
-    if(!s.omega){
-      if(s.T) s.omega = 2*Math.PI/s.T;
-      else if(s.f) s.omega = 2*Math.PI*s.f;
-      else if(sys==="spring"&&s.k&&s.m) s.omega=Math.sqrt(s.k/s.m);
-      else if(sys==="pendulum"&&s.g&&s.L) s.omega=Math.sqrt(s.g/s.L);
-    }
-    if(!s.T && s.omega) s.T = 2*Math.PI/s.omega;
-    if(!s.f && s.T) s.f = 1/s.T;
-
-    // 2. k, m, L
-    if(sys==="spring"){
-      if(!s.k && s.m && s.omega) s.k = s.m*s.omega**2;
-      if(!s.m && s.k && s.omega) s.m = s.k/s.omega**2;
-    }else{
-      if(!s.L && s.g && s.omega) s.L = s.g/s.omega**2;
-    }
-
-    // 3. Vmax, a_max
-    if(s.A && s.omega){
-      if(!s.Vmax) s.Vmax = s.omega*s.A;
-      if(!s.a_max) s.a_max = s.omega**2*s.A;
-    }
-
-    // 4. ถ้ามีเวลาและเฟส
-    if(s.A && s.omega && (s.t!==undefined || s.Phi!==undefined)){
-      const phi = s.Phi||0;
-      const t = s.t||0;
-      s.x = s.A*Math.cos(s.omega*t+phi);
-      s.v = -s.omega*s.A*Math.sin(s.omega*t+phi);
-      s.a = -s.omega**2*s.A*Math.cos(s.omega*t+phi);
-    }
-
-    // 5. จาก x หา a,v ถ้ามีบางส่วน
-    if(s.A && s.x!==undefined && s.omega){
-      if(!s.v) s.v = s.omega*Math.sqrt(Math.max(0,s.A**2-s.x**2));
-      if(!s.a) s.a = -s.omega**2*s.x;
-    }
-
-    // 6. แรงดึงกลับ ΣF
-    if(sys==="spring" && s.k && s.x!==undefined) s.sigmaF = -s.k*s.x;
-    else if(sys==="pendulum" && s.m && s.g) s.sigmaF = s.m*s.g;
-
-    // 7. พลังงาน
-    if(sys==="spring"){
-      if(!s.PE && s.k && s.x!==undefined) s.PE = 0.5*s.k*s.x**2;
-      if(!s.E && s.k && s.A) s.E = 0.5*s.k*s.A**2;
-    }else if(sys==="pendulum"){
-      if(!s.PE && s.m && s.g && s.L && s.x!==undefined)
-        s.PE = s.m*s.g*(1-Math.cos(s.x/s.L)); // approx
-      if(!s.E && s.m && s.omega && s.A)
-        s.E = 0.5*s.m*(s.omega*s.A)**2;
-    }
-    if(!s.KE && s.m && s.v) s.KE = 0.5*s.m*s.v**2;
-    if(!s.E && s.KE && s.PE) s.E = s.KE + s.PE;
-  }
-
-  // แสดงผล
-  let html=`<h3>ผลลัพธ์ (${sys})</h3><table><tr>`;
-  for(const k of allVars) html+=`<th>${labels[k]}</th>`;
-  html+='</tr><tr>';
-  for(const k of allVars){
-    const v=s[k];
-    html+=`<td>${v!==undefined&&!isNaN(v)?v.toFixed(6):''}</td>`;
-  }
-  html+='</tr></table>';
-  document.getElementById("result").innerHTML=html;
-  document.getElementById("result").style.display="block";
-}
+document.getElementById('stateContainer').appendChild(createStateRow());
 updateVisibility();
+
+function showHelp() {
+  alert(`📘 วิธีใช้งานโปรแกรม\n\n1️⃣ เลือกระบบ: สปริง หรือ ลูกตุ้ม\n2️⃣ ใส่ค่าที่ทราบ เช่น m, k, L, g, A, x, v, t, phi\n3️⃣ กดปุ่ม "คำนวณ"\n4️⃣ โปรแกรมจะคำนวณค่าที่ขาด เช่น T, f, ω, E, KE, PE, Vmax, a_max ฯลฯ\n\nเคล็ดลับ:\n- ใส่ค่า g = 9.81 ถ้าไม่ได้ระบุ (สำหรับลูกตุ้ม)\n- ใส่ A และ phi ถ้าต้องการคำนวณ x, v, a ตามเวลา\n- ใช้ phi = 0 ถ้าเริ่มจากสมดุล, phi = π/2 ถ้าเริ่มจากแอมพลิจูด`);
+}
+
+function clearAll() {
+  document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+  document.getElementById('result').style.display = 'none';
+}
+
+function updateVisibility() {
+  const system = document.getElementById('system').value;
+  const isSpring = system === 'spring';
+  allVars.forEach(key => {
+    const input = document.getElementById(`state1_${key}`);
+    const group = input ? input.parentElement : null;
+    if (group) {
+      if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
+        group.classList.add('hidden');
+      } else {
+        group.classList.remove('hidden');
+      }
+    }
+  });
+}
+
+function calculate() {
+  const system = document.getElementById('system').value;
+  const inputs = {};
+  allVars.forEach(k => {
+    const v = document.getElementById(`state1_${k}`).value;
+    if (v.trim() !== '') inputs[k] = parseFloat(v);
+  });
+
+  let result = {...inputs};
+  let explanation = '';
+
+  // Default gravity for pendulum
+  if (system === 'pendulum' && !result.g) {
+    result.g = 9.81;
+    explanation += `ใช้ g = 9.81 m/s² (ค่าเริ่มต้น)\n`;
+  }
+
+  // Calculate omega, T, f
+  if (system === 'spring') {
+    const m = result.m, k = result.k;
+    if (m && k) {
+      result.omega = Math.sqrt(k / m);
+      result.T = 2 * Math.PI / result.omega;
+      result.f = 1 / result.T;
+      explanation += `ระบบสปริง: ω = √(k/m) = ${result.omega.toFixed(4)} rad/s, T = 2π/ω = ${result.T.toFixed(4)} s, f = 1/T = ${result.f.toFixed(4)} Hz\n`;
+    }
+  } else if (system === 'pendulum') {
+    const L = result.L, g = result.g || 9.81;
+    if (L) {
+      result.omega = Math.sqrt(g / L);
+      result.T = 2 * Math.PI / result.omega;
+      result.f = 1 / result.T;
+      explanation += `ลูกตุ้ม: ω = √(g/L) = ${result.omega.toFixed(4)} rad/s, T = 2π/ω = ${result.T.toFixed(4)} s, f = 1/T = ${result.f.toFixed(4)} Hz\n`;
+    }
+  }
+
+  // Calculate maximum values
+  if (result.omega && result.A) {
+    result.Vmax = result.omega * result.A;
+    result.a_max = result.omega * result.omega * result.A;
+    explanation += `Vmax = ωA = ${result.Vmax.toFixed(4)} m/s, a_max = ω²A = ${result.a_max.toFixed(4)} m/s²\n`;
+  }
+
+  // Calculate energy
+  if (result.m && result.omega && result.A) {
+    result.E = 0.5 * result.m * Math.pow(result.omega * result.A, 2);
+    explanation += `พลังงานกลรวม: E = ½ m (ωA)² = ${result.E.toFixed(4)} J\n`;
+  }
+  if (result.k && result.x !== undefined) {
+    result.PE = 0.5 * result.k * Math.pow(result.x, 2);
+    explanation += `พลังงานศักย์: PE = ½ k x² = ${result.PE.toFixed(4)} J\n`;
+  }
+  if (result.m && result.v !== undefined) {
+    result.KE = 0.5 * result.m * Math.pow(result.v, 2);
+    explanation += `พลังงานจลน์: KE = ½ m v² = ${result.KE.toFixed(4)} J\n`;
+  }
+
+  // Calculate force
+  if (result.k && result.x !== undefined) {
+    result.sigmaF = -result.k * result.x;
+    explanation += `แรงดึงกลับ: F = -kx = ${result.sigmaF.toFixed(4)} N\n`;
+  }
+
+  // Calculate time-dependent quantities
+  if (result.A && result.omega && result.t !== undefined && result.phi !== undefined) {
+    result.Phi = result.omega * result.t + result.phi;
+    result.x = result.A * Math.cos(result.Phi);
+    result.v = -result.omega * result.A * Math.sin(result.Phi);
+    result.a = -result.omega * result.omega * result.A * Math.cos(result.Phi);
+    explanation += `เฟสทั้งหมด: Φ = ωt + φ = ${result.Phi.toFixed(4)} rad\n`;
+    explanation += `การกระจัด: x = A cos(Φ) = ${result.x.toFixed(4)} m\n`;
+    explanation += `ความเร็ว: v = -ωA sin(Φ) = ${result.v.toFixed(4)} m/s\n`;
+    explanation += `ความเร่ง: a = -ω²A cos(Φ) = ${result.a.toFixed(4)} m/s²\n`;
+  } else if (result.A && result.x !== undefined && result.omega) {
+    // Calculate v and a based on displacement
+    result.v = result.omega * Math.sqrt(Math.max(0, result.A * result.A - result.x * result.x));
+    result.a = -result.omega * result.omega * result.x;
+    explanation += `ความเร็ว: v = ±ω√(A² - x²) = ${result.v.toFixed(4)} m/s\n`;
+    explanation += `ความเร่ง: a = -ω²x = ${result.a.toFixed(4)} m/s²\n`;
+  }
+
+  // Display results
+  let html = `<h3>ผลลัพธ์ (${system})</h3><table><tr>`;
+  for (let key of allVars) html += `<th>${varLabels[key]}</th>`;
+  html += `</tr><tr>`;
+  for (let key of allVars) {
+    const val = result[key];
+    html += `<td>${val !== undefined && !isNaN(val) ? val.toFixed(4) : ''}</td>`;
+  }
+  html += `</tr></table><pre>${explanation}</pre>`;
+
+  document.getElementById('result').innerHTML = html;
+  document.getElementById('result').style.display = 'block';
+}
 </script>
 </body>
 </html>
