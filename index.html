@@ -2,19 +2,17 @@
 <html lang="th">
 <head>
 <meta charset="utf-8"/>
-<title>Simple-harmonic-calculator-program</title>
-<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<title>Simple Harmonic Calculator</title>
 <style>
   body{font-family:Arial,Helvetica,sans-serif;margin:18px;background:#f7f9fb;color:#111}
   h1{margin-bottom:6px}
   .box{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-bottom:14px}
   h3{margin-top:0}
   label{display:inline-block;width:140px;font-weight:bold;font-size:0.9em}
-  input[type="text"]{width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;margin-right:4px}
+  input[type="text"]{width:80px;padding:4px;border:1px solid #ddd;border-radius:4px;margin-right:4px}
   button{padding:8px 12px;margin:4px;background:#1677ff;color:white;border:none;border-radius:6px;cursor:pointer}
   button:hover{background:#0d5eff}
   .state-row{margin-bottom:12px;padding:10px;border:1px solid #e6eef6;border-radius:6px;background:#f9fcff}
-  .state-row h4{margin:0 0 8px 0;font-size:1.1em}
   .vars-container{display:flex;flex-wrap:wrap}
   .var-group{display:inline-block;margin:4px 6px;vertical-align:top;min-width:160px}
   .warning{color:#b91c1c;font-weight:700}
@@ -27,14 +25,11 @@
 </style>
 </head>
 <body>
-  <h1>Simple-harmonic-calculator-program</h1>
+  <h1>📘 Simple Harmonic Motion Calculator</h1>
 
   <div class="box">
-    <h3>🔧 การใช้งานโปรแกรม</h3>
-    <button onclick="alert('1. เลือกระบบ (สปริงหรือลูกตุ้ม)\n2. ใส่ค่าตัวแปรในสภาวะเดียว\n3. กด \"คำนวณ\" เพื่อดูผลลัพธ์\n4. กด \"ล้างทั้งหมด\" เพื่อเริ่มใหม่')">
-      ดูวิธีใช้งาน
-    </button>
-    <button onclick="clearAll()">ล้างทั้งหมด</button>
+    <button onclick="showHelp()">📖 ดูวิธีใช้งาน</button>
+    <button onclick="clearAll()">🧹 ล้างทั้งหมด</button>
   </div>
 
   <div class="box">
@@ -46,25 +41,25 @@
         <option value="pendulum">ลูกตุ้ม (Pendulum)</option>
       </select>
     </div>
-
-    <div id="statesContainer"></div>
-
+    <div id="stateContainer"></div>
     <br>
-    <button onclick="calculate()">คำนวณ</button>
+    <button onclick="calculate()">⚙️ คำนวณ</button>
   </div>
 
   <div id="result" class="box"></div>
 
 <script>
 const varLabels = {
-  m: 'มวล m (kg)', k: 'สปริง k (N/m)', L: 'ความยาว L (m)', g: 'แรงโน้มถ่วง g (m/s²)',
-  x: 'การกระจัด x (m)', v: 'ความเร็ว v (m/s)', a: 'ความเร่ง a (m/s²)',
-  Vmax: 'Vmax (m/s)', a_max: 'a_max (m/s²)', A: 'แอมพลิจูด A (m)',
-  omega: 'ω (rad/s)', f: 'ความถี่ f (Hz)', T: 'คาบ T (s)',
-  E: 'พลังงานรวม E (J)', KE: 'พลังงานจลน์ KE (J)', PE: 'พลังงานศักย์ PE (J)'
+  m: 'มวล m (kg)', k: 'สปริง k (N/m)', L: 'ความยาว L (m)',
+  g: 'แรงโน้มถ่วง g (m/s²)', A: 'แอมพลิจูด A (m)',
+  omega: 'ความถี่เชิงมุม ω (rad/s)', f: 'ความถี่ f (Hz)',
+  T: 'คาบ T (s)', x: 'การกระจัด x (m)',
+  v: 'ความเร็ว v (m/s)', a: 'ความเร่ง a (m/s²)',
+  E: 'พลังงานรวม E (J)'
 };
 const allVars = Object.keys(varLabels);
 
+// ✅ สร้างฟอร์มสภาวะเดียว
 function createStateRow() {
   const div = document.createElement('div');
   div.className = 'state-row';
@@ -85,6 +80,18 @@ function createStateRow() {
   return div;
 }
 
+document.getElementById('stateContainer').appendChild(createStateRow());
+updateVisibility();
+
+function showHelp() {
+  alert(`📘 วิธีใช้งานโปรแกรม\n\n1️⃣ เลือกระบบ: สปริง หรือ ลูกตุ้ม\n2️⃣ ใส่ค่าที่ทราบ เช่น m, k, L, A, T\n3️⃣ กดปุ่ม "คำนวณ"\n4️⃣ โปรแกรมจะคำนวณค่าที่ขาด เช่น คาบ, ความถี่, ω, E ฯลฯ\n\nเคล็ดลับ:\n- ใส่ค่า g = 9.81 ถ้าไม่ได้ระบุ\n- ใส่ A ถ้าต้องการหาพลังงานกล`);
+}
+
+function clearAll() {
+  document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+  document.getElementById('result').style.display = 'none';
+}
+
 function updateVisibility() {
   const system = document.getElementById('system').value;
   const isSpring = system === 'spring';
@@ -101,56 +108,64 @@ function updateVisibility() {
   });
 }
 
-function getInputValues() {
-  const system = document.getElementById('system').value;
-  const state = {};
-  allVars.forEach(key => {
-    const input = document.getElementById(`state1_${key}`);
-    if (input && input.value.trim() !== '') state[key] = input.value.trim();
-  });
-  return { system, states: [state] };
-}
-
+// ✅ คำนวณในเบราว์เซอร์โดยไม่ต้องใช้ backend
 function calculate() {
-  const payload = getInputValues();
-  fetch('/solve', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload)
-  })
-  .then(res => res.json())
-  .then(data => {
-    const resultDiv = document.getElementById('result');
-    if (data.error) {
-      resultDiv.innerHTML = `<p class="warning">เกิดข้อผิดพลาด: ${data.error}</p>`;
-    } else {
-      let html = `<h3>ผลลัพธ์ (${data.system})</h3>`;
-      const s = data.results[0];
-      html += `<table><tr>`;
-      for (let key of allVars) html += `<th>${varLabels[key]}</th>`;
-      html += `</tr><tr>`;
-      for (let key of allVars)
-        html += `<td>${s[key] !== undefined && s[key] !== null ? s[key].toFixed ? s[key].toFixed(4) : s[key] : ''}</td>`;
-      html += `</tr></table>`;
-      if (s.warnings && s.warnings.length > 0)
-        html += `<p class="warning">คำเตือน: ${s.warnings.join('; ')}</p>`;
-      html += `<pre>${s.explanation || ''}</pre>`;
-      resultDiv.innerHTML = html;
-      resultDiv.style.display = 'block';
-    }
-  })
-  .catch(err => {
-    document.getElementById('result').innerHTML = `<p class="warning">เกิดข้อผิดพลาด: ${err}</p>`;
+  const system = document.getElementById('system').value;
+  const inputs = {};
+  allVars.forEach(k => {
+    const v = document.getElementById(`state1_${k}`).value;
+    if (v.trim() !== '') inputs[k] = parseFloat(v);
   });
-}
 
-function clearAll() {
-  document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
-  document.getElementById('result').style.display = 'none';
-}
+  let result = {...inputs};
+  let explanation = '';
 
-document.getElementById('statesContainer').appendChild(createStateRow());
-updateVisibility();
+  if (system === 'spring') {
+    const m = result.m, k = result.k;
+    if (m && k) {
+      result.omega = Math.sqrt(k/m);
+      result.T = 2*Math.PI/ result.omega;
+      result.f = 1 / result.T;
+      explanation += `ระบบสปริง: ω = √(k/m),  T = 2π√(m/k)\n`;
+    }
+  } else if (system === 'pendulum') {
+    const L = result.L, g = result.g || 9.81;
+    result.g = g;
+    if (L) {
+      result.omega = Math.sqrt(g/L);
+      result.T = 2*Math.PI/ result.omega;
+      result.f = 1 / result.T;
+      explanation += `ลูกตุ้ม: ω = √(g/L),  T = 2π√(L/g)\n`;
+    }
+  }
+
+  // พลังงานรวม (ถ้ามีค่า A)
+  if (result.m && result.omega && result.A) {
+    result.E = 0.5 * result.m * Math.pow(result.omega*result.A,2);
+    explanation += `พลังงานกล: E = ½ m (ωA)²\n`;
+  }
+
+  // ความเร็วและความเร่ง (ถ้ามี A และ x)
+  if (result.A && result.x !== undefined && result.omega) {
+    const A = result.A, x = result.x, ω = result.omega;
+    result.v = ω*Math.sqrt(Math.max(0,A*A - x*x));
+    result.a = -ω*ω*x;
+    explanation += `v = ω√(A² - x²),  a = -ω²x\n`;
+  }
+
+  // แสดงผล
+  let html = `<h3>ผลลัพธ์ (${system})</h3><table><tr>`;
+  for (let key of allVars) html += `<th>${varLabels[key]}</th>`;
+  html += `</tr><tr>`;
+  for (let key of allVars) {
+    const val = result[key];
+    html += `<td>${val !== undefined && !isNaN(val) ? val.toFixed(4) : ''}</td>`;
+  }
+  html += `</tr></table><pre>${explanation}</pre>`;
+
+  document.getElementById('result').innerHTML = html;
+  document.getElementById('result').style.display = 'block';
+}
 </script>
 </body>
 </html>
