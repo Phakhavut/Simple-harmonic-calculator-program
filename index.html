@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8"/>
-<title>Simple Harmonic Calculator</title>
-<style>
-  body{font-family:Arial,Helvetica,sans-serif;margin:18px;background:#f7f9fb;color:#111}
-  h1{margin-bottom:6px}
-  .box{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-bottom:14px}
-  h3{margin-top:0}
-  label{display:inline-block;width:140px;font-weight:bold;font-size:0.9em}
-  input[type="text"]{width:80px;padding:4px;border:1px solid #ddd;border-radius:4px;margin-right:4px}
-  button{padding:8px 12px;margin:4px;background:#1677ff;color:white;border:none;border-radius:6px;cursor:pointer}
-  button:hover{background:#0d5eff}
-  .state-row{margin-bottom:12px;padding:10px;border:1px solid #e6eef6;border-radius:6px;background:#f9fcff}
-  .vars-container{display:flex;flex-wrap:wrap}
-  .var-group{display:inline-block;margin:4px 6px;vertical-align:top;min-width:160px}
-  .warning{color:#b91c1c;font-weight:700}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  td,th{border:1px solid #e6eef6;padding:6px;text-align:left}
-  th{background:#f0f8ff}
-  #result{display:none}
-  select{width:120px;padding:4px}
-  .hidden{display:none !important}
-</style>
+  <meta charset="utf-8"/>
+  <title>Simple Harmonic Calculator</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 18px; background: #f7f9fb; color: #111; }
+    h1 { margin-bottom: 6px; }
+    .box { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 14px; }
+    h3 { margin-top: 0; }
+    label { display: inline-block; width: 140px; font-weight: bold; font-size: 0.9em; }
+    input[type="text"] { width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; margin-right: 4px; }
+    button { padding: 8px 12px; margin: 4px; background: #1677ff; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #0d5eff; }
+    .state-row { margin-bottom: 12px; padding: 10px; border: 1px solid #e6eef6; border-radius: 6px; background: #f9fcff; }
+    .vars-container { display: flex; flex-wrap: wrap; }
+    .var-group { display: inline-block; margin: 4px 6px; vertical-align: top; min-width: 160px; }
+    .warning { color: #b91c1c; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td, th { border: 1px solid #e6eef6; padding: 6px; text-align: left; }
+    th { background: #f0f8ff; }
+    #result { display: none; }
+    select { width: 120px; padding: 4px; }
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
   <h1>📘 Simple Harmonic Motion Calculator</h1>
@@ -48,174 +48,366 @@
 
   <div id="result" class="box"></div>
 
-<script>
-const varLabels = {
-  m: 'มวล m (kg)', 
-  k: 'สปริง k (N/m)', 
-  L: 'ความยาว L (m)', 
-  g: 'แรงโน้มถ่วง g (m/s²)', 
-  sigmaF: 'แรงดึงกลับ F (N)', 
-  x: 'การกระจัด x (m)', 
-  v: 'ความเร็ว v (m/s)', 
-  Vmax: 'ความเร็วสูงสุด Vmax (m/s)', 
-  a_max: 'ความเร่งสูงสุด a_max (m/s²)', 
-  a: 'ความเร่ง a (m/s²)', 
-  KE: 'พลังงานจลน์ KE (J)', 
-  PE: 'พลังงานศักย์ PE (J)', 
-  E: 'พลังงานรวม E (J)', 
-  A: 'แอมพลิจูด A (m)', 
-  omega: 'ความถี่เชิงมุม ω (rad/s)', 
-  f: 'ความถี่ f (Hz)', 
-  T: 'คาบ T (s)', 
-  Phi: 'เฟสทั้งหมด Φ (rad)', 
-  phi: 'เฟสเริ่มต้น φ (rad)', 
-  t: 'เวลา t (s)'
-};
-const allVars = Object.keys(varLabels);
+  <script>
+    const varLabels = {
+      // System parameters
+      m: 'มวล m (kg)',
+      k: 'สปริง k (N/m)',
+      L: 'ความยาว L (m)',
+      g: 'แรงโน้มถ่วง g (m/s²)',
+      // Motion parameters
+      sigmaF: 'แรงดึงกลับ F (N)',
+      x: 'การกระจัด x (m)',
+      v: 'ความเร็ว v (m/s)',
+      a: 'ความเร่ง a (m/s²)',
+      // Maximum values
+      A: 'แอมพลิจูด A (m)',
+      Vmax: 'ความเร็วสูงสุด Vmax (m/s)',
+      a_max: 'ความเร่งสูงสุด a_max (m/s²)',
+      // Energy
+      KE: 'พลังงานจลน์ KE (J)',
+      PE: 'พลังงานศักย์ PE (J)',
+      E: 'พลังงานรวม E (J)',
+      // Frequency parameters
+      omega: 'ความถี่เชิงมุม ω (rad/s)',
+      f: 'ความถี่ f (Hz)',
+      T: 'คาบ T (s)',
+      // Phase and time
+      t: 'เวลา t (s)',
+      phi: 'เฟสเริ่มต้น φ (rad)',
+      Phi: 'เฟสทั้งหมด Φ (rad)'
+    };
+    const allVars = Object.keys(varLabels);
 
-// Create form for input variables
-function createStateRow() {
-  const div = document.createElement('div');
-  div.className = 'state-row';
-  div.innerHTML = `<h4>สภาวะเดียว</h4><div class="vars-container"></div>`;
-  const varsContainer = div.querySelector('.vars-container');
-  allVars.forEach(key => {
-    const group = document.createElement('div');
-    group.className = 'var-group';
-    const label = document.createElement('label');
-    label.textContent = varLabels[key];
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = `state1_${key}`;
-    group.appendChild(label);
-    group.appendChild(input);
-    varsContainer.appendChild(group);
-  });
-  return div;
-}
+    // Function to create the input form
+    function createStateRow() {
+      const div = document.createElement('div');
+      div.className = 'state-row';
+      div.innerHTML = `<h4>สภาวะเดียว</h4><div class="vars-container"></div>`;
+      const varsContainer = div.querySelector('.vars-container');
+      allVars.forEach(key => {
+        const group = document.createElement('div');
+        group.className = 'var-group';
+        const label = document.createElement('label');
+        label.textContent = varLabels[key];
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `state1_${key}`;
+        group.appendChild(label);
+        group.appendChild(input);
+        varsContainer.appendChild(group);
+      });
+      return div;
+    }
 
-document.getElementById('stateContainer').appendChild(createStateRow());
-updateVisibility();
+    document.getElementById('stateContainer').appendChild(createStateRow());
+    updateVisibility();
 
-function showHelp() {
-  alert(`📘 วิธีใช้งานโปรแกรม\n\n1️⃣ เลือกระบบ: สปริง หรือ ลูกตุ้ม\n2️⃣ ใส่ค่าที่ทราบ เช่น m, k, L, g, A, x, v, t, phi\n3️⃣ กดปุ่ม "คำนวณ"\n4️⃣ โปรแกรมจะคำนวณค่าที่ขาด เช่น T, f, ω, E, KE, PE, Vmax, a_max ฯลฯ\n\nเคล็ดลับ:\n- ใส่ค่า g = 9.81 ถ้าไม่ได้ระบุ (สำหรับลูกตุ้ม)\n- ใส่ A และ phi ถ้าต้องการคำนวณ x, v, a ตามเวลา\n- ใช้ phi = 0 ถ้าเริ่มจากสมดุล, phi = π/2 ถ้าเริ่มจากแอมพลิจูด`);
-}
+    // Help function
+    function showHelp() {
+      alert(`📘 วิธีใช้งานโปรแกรม\n\n1️⃣ เลือกระบบ: สปริง หรือ ลูกตุ้ม\n2️⃣ ใส่ค่าที่ทราบ เช่น m, k, L, g, A, x, v, t, phi\n3️⃣ กดปุ่ม "คำนวณ"\n4️⃣ โปรแกรมจะคำนวณค่าที่ขาด เช่น T, f, ω, E, KE, PE, Vmax, a_max ฯลฯ\n\nเคล็ดลับ:\n- ใส่ค่า g = 9.81 ถ้าไม่ได้ระบุ (สำหรับลูกตุ้ม)\n- ใส่ A และ phi ถ้าต้องการคำนวณ x, v, a ตามเวลา\n- ใช้ phi = 0 ถ้าเริ่มจากสมดุล, phi = π/2 ถ้าเริ่มจากแอมพลิจูด\n- โปรแกรมจะพยายามคำนวณทุกค่าที่เป็นไปได้จากข้อมูลที่ให้`);
+    }
 
-function clearAll() {
-  document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
-  document.getElementById('result').style.display = 'none';
-}
+    // Clear all inputs
+    function clearAll() {
+      document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+      document.getElementById('result').style.display = 'none';
+    }
 
-function updateVisibility() {
-  const system = document.getElementById('system').value;
-  const isSpring = system === 'spring';
-  allVars.forEach(key => {
-    const input = document.getElementById(`state1_${key}`);
-    const group = input ? input.parentElement : null;
-    if (group) {
-      if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
-        group.classList.add('hidden');
-      } else {
-        group.classList.remove('hidden');
+    // Update visibility based on system
+    function updateVisibility() {
+      const system = document.getElementById('system').value;
+      const isSpring = system === 'spring';
+      allVars.forEach(key => {
+        const input = document.getElementById(`state1_${key}`);
+        const group = input ? input.parentElement : null;
+        if (group) {
+          if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
+            group.classList.add('hidden');
+          } else {
+            group.classList.remove('hidden');
+          }
+        }
+      });
+    }
+
+    // Calculation function
+    function calculate() {
+      const system = document.getElementById('system').value;
+      const inputs = {};
+      allVars.forEach(k => {
+        const v = document.getElementById(`state1_${k}`).value;
+        if (v.trim() !== '') inputs[k] = parseFloat(v);
+      });
+
+      let result = { ...inputs };
+      let explanation = '';
+
+      if (system === 'pendulum' && !('g' in result)) {
+        result.g = 9.81;
+        explanation += `ใช้ g = 9.81 m/s² (ค่าเริ่มต้น)\n`;
       }
+
+      let changed = true;
+      while (changed) {
+        changed = false;
+
+        // Frequency relations: f, T, omega
+        if ('f' in result && !('T' in result)) {
+          result.T = 1 / result.f;
+          explanation += `คาบ: T = 1 / f = ${result.T.toFixed(4)} s\n`;
+          changed = true;
+        }
+        if ('T' in result && !('f' in result)) {
+          result.f = 1 / result.T;
+          explanation += `ความถี่: f = 1 / T = ${result.f.toFixed(4)} Hz\n`;
+          changed = true;
+        }
+        if ('f' in result && !('omega' in result)) {
+          result.omega = 2 * Math.PI * result.f;
+          explanation += `ความถี่เชิงมุม: ω = 2π f = ${result.omega.toFixed(4)} rad/s\n`;
+          changed = true;
+        }
+        if ('omega' in result && !('f' in result)) {
+          result.f = result.omega / (2 * Math.PI);
+          explanation += `ความถี่: f = ω / (2π) = ${result.f.toFixed(4)} Hz\n`;
+          changed = true;
+        }
+        if ('T' in result && !('omega' in result)) {
+          result.omega = 2 * Math.PI / result.T;
+          explanation += `ความถี่เชิงมุม: ω = 2π / T = ${result.omega.toFixed(4)} rad/s\n`;
+          changed = true;
+        }
+        if ('omega' in result && !('T' in result)) {
+          result.T = 2 * Math.PI / result.omega;
+          explanation += `คาบ: T = 2π / ω = ${result.T.toFixed(4)} s\n`;
+          changed = true;
+        }
+
+        // System-specific calculations
+        if (system === 'spring') {
+          if ('k' in result && 'm' in result && !('omega' in result)) {
+            result.omega = Math.sqrt(result.k / result.m);
+            explanation += `ω = √(k/m) = ${result.omega.toFixed(4)} rad/s\n`;
+            changed = true;
+          }
+          if ('omega' in result && 'm' in result && !('k' in result)) {
+            result.k = result.m * Math.pow(result.omega, 2);
+            explanation += `k = m ω² = ${result.k.toFixed(4)} N/m\n`;
+            changed = true;
+          }
+          if ('omega' in result && 'k' in result && !('m' in result)) {
+            result.m = result.k / Math.pow(result.omega, 2);
+            explanation += `m = k / ω² = ${result.m.toFixed(4)} kg\n`;
+            changed = true;
+          }
+          // Spring-specific PE and force if k is known
+          if ('k' in result && 'x' in result && !('PE' in result)) {
+            result.PE = 0.5 * result.k * Math.pow(result.x, 2);
+            explanation += `PE = ½ k x² = ${result.PE.toFixed(4)} J\n`;
+            changed = true;
+          }
+          if ('k' in result && 'x' in result && !('sigmaF' in result)) {
+            result.sigmaF = -result.k * result.x;
+            explanation += `แรงดึงกลับ: F = -k x = ${result.sigmaF.toFixed(4)} N\n`;
+            changed = true;
+          }
+        } else if (system === 'pendulum') {
+          if ('L' in result && 'g' in result && !('omega' in result)) {
+            result.omega = Math.sqrt(result.g / result.L);
+            explanation += `ω = √(g/L) = ${result.omega.toFixed(4)} rad/s\n`;
+            changed = true;
+          }
+          if ('omega' in result && 'g' in result && !('L' in result)) {
+            result.L = result.g / Math.pow(result.omega, 2);
+            explanation += `L = g / ω² = ${result.L.toFixed(4)} m\n`;
+            changed = true;
+          }
+          if ('omega' in result && 'L' in result && !('g' in result)) {
+            result.g = result.L * Math.pow(result.omega, 2);
+            explanation += `g = L ω² = ${result.g.toFixed(4)} m/s²\n`;
+            changed = true;
+          }
+        }
+
+        // Maximum values
+        if ('omega' in result && 'A' in result && !('Vmax' in result)) {
+          result.Vmax = result.omega * result.A;
+          explanation += `Vmax = ω A = ${result.Vmax.toFixed(4)} m/s\n`;
+          changed = true;
+        }
+        if ('Vmax' in result && 'omega' in result && !('A' in result)) {
+          result.A = result.Vmax / result.omega;
+          explanation += `A = Vmax / ω = ${result.A.toFixed(4)} m\n`;
+          changed = true;
+        }
+        if ('Vmax' in result && 'A' in result && !('omega' in result)) {
+          result.omega = result.Vmax / result.A;
+          explanation += `ω = Vmax / A = ${result.omega.toFixed(4)} rad/s\n`;
+          changed = true;
+        }
+        if ('omega' in result && 'A' in result && !('a_max' in result)) {
+          result.a_max = Math.pow(result.omega, 2) * result.A;
+          explanation += `a_max = ω² A = ${result.a_max.toFixed(4)} m/s²\n`;
+          changed = true;
+        }
+        if ('a_max' in result && 'omega' in result && !('A' in result)) {
+          result.A = result.a_max / Math.pow(result.omega, 2);
+          explanation += `A = a_max / ω² = ${result.A.toFixed(4)} m\n`;
+          changed = true;
+        }
+        if ('a_max' in result && 'A' in result && !('omega' in result)) {
+          result.omega = Math.sqrt(result.a_max / result.A);
+          explanation += `ω = √(a_max / A) = ${result.omega.toFixed(4)} rad/s\n`;
+          changed = true;
+        }
+
+        // Energy calculations (general SHM form)
+        if ('m' in result && 'omega' in result && 'A' in result && !('E' in result)) {
+          result.E = 0.5 * result.m * Math.pow(result.omega, 2) * Math.pow(result.A, 2);
+          explanation += `พลังงานรวม: E = ½ m ω² A² = ${result.E.toFixed(4)} J\n`;
+          changed = true;
+        }
+        if ('E' in result && 'm' in result && 'omega' in result && !('A' in result)) {
+          result.A = Math.sqrt(2 * result.E / (result.m * Math.pow(result.omega, 2)));
+          explanation += `A = √(2 E / (m ω²)) = ${result.A.toFixed(4)} m\n`;
+          changed = true;
+        }
+        if ('m' in result && 'omega' in result && 'x' in result && !('PE' in result)) {
+          result.PE = 0.5 * result.m * Math.pow(result.omega, 2) * Math.pow(result.x, 2);
+          explanation += `พลังงานศักย์: PE = ½ m ω² x² = ${result.PE.toFixed(4)} J\n`;
+          changed = true;
+        }
+        if ('PE' in result && 'm' in result && 'omega' in result && !('x' in result)) {
+          result.x = Math.sqrt(2 * result.PE / (result.m * Math.pow(result.omega, 2)));
+          explanation += `x = √(2 PE / (m ω²)) = ${result.x.toFixed(4)} m (assuming positive)\n`;
+          changed = true;
+        }
+        if ('m' in result && 'v' in result && !('KE' in result)) {
+          result.KE = 0.5 * result.m * Math.pow(result.v, 2);
+          explanation += `พลังงานจลน์: KE = ½ m v² = ${result.KE.toFixed(4)} J\n`;
+          changed = true;
+        }
+        if ('KE' in result && 'm' in result && !('v' in result)) {
+          result.v = Math.sqrt(2 * result.KE / result.m);
+          explanation += `v = √(2 KE / m) = ${result.v.toFixed(4)} m/s (assuming positive direction)\n`;
+          changed = true;
+        }
+        if ('KE' in result && 'PE' in result && !('E' in result)) {
+          result.E = result.KE + result.PE;
+          explanation += `พลังงานรวม: E = KE + PE = ${result.E.toFixed(4)} J\n`;
+          changed = true;
+        }
+        if ('E' in result && 'KE' in result && !('PE' in result)) {
+          result.PE = result.E - result.KE;
+          explanation += `PE = E - KE = ${result.PE.toFixed(4)} J\n`;
+          changed = true;
+        }
+        if ('E' in result && 'PE' in result && !('KE' in result)) {
+          result.KE = result.E - result.PE;
+          explanation += `KE = E - PE = ${result.KE.toFixed(4)} J\n`;
+          changed = true;
+        }
+
+        // Acceleration and force
+        if ('omega' in result && 'x' in result && !('a' in result)) {
+          result.a = -Math.pow(result.omega, 2) * result.x;
+          explanation += `ความเร่ง: a = -ω² x = ${result.a.toFixed(4)} m/s²\n`;
+          changed = true;
+        }
+        if ('a' in result && 'omega' in result && !('x' in result)) {
+          result.x = -result.a / Math.pow(result.omega, 2);
+          explanation += `x = -a / ω² = ${result.x.toFixed(4)} m\n`;
+          changed = true;
+        }
+        if ('m' in result && 'omega' in result && 'x' in result && !('sigmaF' in result)) {
+          result.sigmaF = -result.m * Math.pow(result.omega, 2) * result.x;
+          explanation += `แรงดึงกลับ: F = -m ω² x = ${result.sigmaF.toFixed(4)} N\n`;
+          changed = true;
+        }
+        if ('sigmaF' in result && 'm' in result && !('a' in result)) {
+          result.a = result.sigmaF / result.m;
+          explanation += `a = F / m = ${result.a.toFixed(4)} m/s²\n`;
+          changed = true;
+        }
+
+        // Displacement-based velocity
+        if ('omega' in result && 'A' in result && 'x' in result && !('v' in result)) {
+          result.v = result.omega * Math.sqrt(Math.max(0, Math.pow(result.A, 2) - Math.pow(result.x, 2)));
+          explanation += `ความเร็ว: v = ω √(A² - x²) = ${result.v.toFixed(4)} m/s (magnitude)\n`;
+          changed = true;
+        }
+        if ('v' in result && 'omega' in result && 'x' in result && !('A' in result)) {
+          result.A = Math.sqrt(Math.pow(result.v / result.omega, 2) + Math.pow(result.x, 2));
+          explanation += `A = √((v/ω)² + x²) = ${result.A.toFixed(4)} m\n`;
+          changed = true;
+        }
+
+        // Time-dependent calculations
+        if ('omega' in result && 't' in result && 'phi' in result && !('Phi' in result)) {
+          result.Phi = result.omega * result.t + result.phi;
+          explanation += `เฟสทั้งหมด: Φ = ω t + φ = ${result.Phi.toFixed(4)} rad\n`;
+          changed = true;
+        }
+        if ('omega' in result && 't' in result && 'Phi' in result && !('phi' in result)) {
+          result.phi = result.Phi - result.omega * result.t;
+          explanation += `φ = Φ - ω t = ${result.phi.toFixed(4)} rad\n`;
+          changed = true;
+        }
+        if ('omega' in result && 'phi' in result && 'Phi' in result && !('t' in result)) {
+          result.t = (result.Phi - result.phi) / result.omega;
+          explanation += `t = (Φ - φ) / ω = ${result.t.toFixed(4)} s\n`;
+          changed = true;
+        }
+        if ('A' in result && 'Phi' in result && !('x' in result)) {
+          result.x = result.A * Math.cos(result.Phi);
+          explanation += `การกระจัด: x = A cos(Φ) = ${result.x.toFixed(4)} m\n`;
+          changed = true;
+        }
+        if ('omega' in result && 'A' in result && 'Phi' in result && !('v' in result)) {
+          result.v = -result.omega * result.A * Math.sin(result.Phi);
+          explanation += `ความเร็ว: v = -ω A sin(Φ) = ${result.v.toFixed(4)} m/s\n`;
+          changed = true;
+        }
+        if ('omega' in result && 'A' in result && 'Phi' in result && !('a' in result)) {
+          result.a = -Math.pow(result.omega, 2) * result.A * Math.cos(result.Phi);
+          explanation += `ความเร่ง: a = -ω² A cos(Φ) = ${result.a.toFixed(4)} m/s²\n`;
+          changed = true;
+        }
+        // Inverse phase from x and A (preliminary)
+        if ('x' in result && 'A' in result && !('Phi' in result)) {
+          let cosPhi = result.x / result.A;
+          if (Math.abs(cosPhi) <= 1) {
+            let phiCandidate = Math.acos(cosPhi);
+            result.Phi = phiCandidate;
+            explanation += `Φ = acos(x / A) = ${result.Phi.toFixed(4)} rad (preliminary; may adjust with v)\n`;
+            changed = true;
+          }
+        }
+        // Adjust phase sign based on v
+        if ('v' in result && 'omega' in result && 'A' in result && 'Phi' in result) {
+          let expectedV = -result.omega * result.A * Math.sin(result.Phi);
+          if (Math.sign(expectedV) !== Math.sign(result.v) && Math.sign(result.v) !== 0) {
+            result.Phi = -result.Phi;
+            explanation += `Adjusted Φ = -acos(x / A) = ${result.Phi.toFixed(4)} rad to match v sign\n`;
+            changed = true;
+          }
+        }
+      }
+
+      // Display results in table
+      let html = `<h3>ผลลัพธ์ (${system})</h3><table><tr>`;
+      for (let key of allVars) html += `<th>${varLabels[key]}</th>`;
+      html += `</tr><tr>`;
+      for (let key of allVars) {
+        const val = result[key];
+        html += `<td>${val !== undefined && !isNaN(val) ? val.toFixed(4) : ''}</td>`;
+      }
+      html += `</tr></table><pre>${explanation}</pre>`;
+
+      document.getElementById('result').innerHTML = html;
+      document.getElementById('result').style.display = 'block';
     }
-  });
-}
-
-function calculate() {
-  const system = document.getElementById('system').value;
-  const inputs = {};
-  allVars.forEach(k => {
-    const v = document.getElementById(`state1_${k}`).value;
-    if (v.trim() !== '') inputs[k] = parseFloat(v);
-  });
-
-  let result = {...inputs};
-  let explanation = '';
-
-  // Default gravity for pendulum
-  if (system === 'pendulum' && !result.g) {
-    result.g = 9.81;
-    explanation += `ใช้ g = 9.81 m/s² (ค่าเริ่มต้น)\n`;
-  }
-
-  // Calculate omega, T, f
-  if (system === 'spring') {
-    const m = result.m, k = result.k;
-    if (m && k) {
-      result.omega = Math.sqrt(k / m);
-      result.T = 2 * Math.PI / result.omega;
-      result.f = 1 / result.T;
-      explanation += `ระบบสปริง: ω = √(k/m) = ${result.omega.toFixed(4)} rad/s, T = 2π/ω = ${result.T.toFixed(4)} s, f = 1/T = ${result.f.toFixed(4)} Hz\n`;
-    }
-  } else if (system === 'pendulum') {
-    const L = result.L, g = result.g || 9.81;
-    if (L) {
-      result.omega = Math.sqrt(g / L);
-      result.T = 2 * Math.PI / result.omega;
-      result.f = 1 / result.T;
-      explanation += `ลูกตุ้ม: ω = √(g/L) = ${result.omega.toFixed(4)} rad/s, T = 2π/ω = ${result.T.toFixed(4)} s, f = 1/T = ${result.f.toFixed(4)} Hz\n`;
-    }
-  }
-
-  // Calculate maximum values
-  if (result.omega && result.A) {
-    result.Vmax = result.omega * result.A;
-    result.a_max = result.omega * result.omega * result.A;
-    explanation += `Vmax = ωA = ${result.Vmax.toFixed(4)} m/s, a_max = ω²A = ${result.a_max.toFixed(4)} m/s²\n`;
-  }
-
-  // Calculate energy
-  if (result.m && result.omega && result.A) {
-    result.E = 0.5 * result.m * Math.pow(result.omega * result.A, 2);
-    explanation += `พลังงานกลรวม: E = ½ m (ωA)² = ${result.E.toFixed(4)} J\n`;
-  }
-  if (result.k && result.x !== undefined) {
-    result.PE = 0.5 * result.k * Math.pow(result.x, 2);
-    explanation += `พลังงานศักย์: PE = ½ k x² = ${result.PE.toFixed(4)} J\n`;
-  }
-  if (result.m && result.v !== undefined) {
-    result.KE = 0.5 * result.m * Math.pow(result.v, 2);
-    explanation += `พลังงานจลน์: KE = ½ m v² = ${result.KE.toFixed(4)} J\n`;
-  }
-
-  // Calculate force
-  if (result.k && result.x !== undefined) {
-    result.sigmaF = -result.k * result.x;
-    explanation += `แรงดึงกลับ: F = -kx = ${result.sigmaF.toFixed(4)} N\n`;
-  }
-
-  // Calculate time-dependent quantities
-  if (result.A && result.omega && result.t !== undefined && result.phi !== undefined) {
-    result.Phi = result.omega * result.t + result.phi;
-    result.x = result.A * Math.cos(result.Phi);
-    result.v = -result.omega * result.A * Math.sin(result.Phi);
-    result.a = -result.omega * result.omega * result.A * Math.cos(result.Phi);
-    explanation += `เฟสทั้งหมด: Φ = ωt + φ = ${result.Phi.toFixed(4)} rad\n`;
-    explanation += `การกระจัด: x = A cos(Φ) = ${result.x.toFixed(4)} m\n`;
-    explanation += `ความเร็ว: v = -ωA sin(Φ) = ${result.v.toFixed(4)} m/s\n`;
-    explanation += `ความเร่ง: a = -ω²A cos(Φ) = ${result.a.toFixed(4)} m/s²\n`;
-  } else if (result.A && result.x !== undefined && result.omega) {
-    // Calculate v and a based on displacement
-    result.v = result.omega * Math.sqrt(Math.max(0, result.A * result.A - result.x * result.x));
-    result.a = -result.omega * result.omega * result.x;
-    explanation += `ความเร็ว: v = ±ω√(A² - x²) = ${result.v.toFixed(4)} m/s\n`;
-    explanation += `ความเร่ง: a = -ω²x = ${result.a.toFixed(4)} m/s²\n`;
-  }
-
-  // Display results
-  let html = `<h3>ผลลัพธ์ (${system})</h3><table><tr>`;
-  for (let key of allVars) html += `<th>${varLabels[key]}</th>`;
-  html += `</tr><tr>`;
-  for (let key of allVars) {
-    const val = result[key];
-    html += `<td>${val !== undefined && !isNaN(val) ? val.toFixed(4) : ''}</td>`;
-  }
-  html += `</tr></table><pre>${explanation}</pre>`;
-
-  document.getElementById('result').innerHTML = html;
-  document.getElementById('result').style.display = 'block';
-}
-</script>
+  </script>
 </body>
 </html>
