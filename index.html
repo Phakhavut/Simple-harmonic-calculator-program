@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="utf-8"/>
-  <title>Simple Harmonic Motion Calculator (เวอร์ชันแก้ไขแล้ว - ช่องใส่ค่ากลับมา + วิธีใช้งานกดได้)</title>
+  <title>Simple Harmonic Motion Calculator (เวอร์ชันสมบูรณ์ + สะอาดสุด)</title>
   <style>
     body { font-family: Arial, Helvetica, sans-serif; margin: 18px; background: #f7f9fb; color: #111; }
     h1 { margin-bottom: 6px; }
@@ -15,7 +15,6 @@
     .state-row { margin-bottom: 16px; padding: 12px; border: 1px solid #e6eef6; border-radius: 6px; background: #f9fcff; }
     .vars-container { display: flex; flex-wrap: wrap; gap: 8px; }
     .var-group { display: inline-block; margin: 4px 6px; vertical-align: top; min-width: 170px; }
-    .warning { color: #b91c1c; font-weight: 700; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     td, th { border: 1px solid #e6eef6; padding: 8px; text-align: center; }
     th { background: #f0f8ff; }
@@ -43,7 +42,7 @@
   </style>
 </head>
 <body>
-  <h1>📘 Simple Harmonic Calculator (เวอร์ชันแก้ไขแล้ว - ช่องใส่ค่ากลับมา + วิธีใช้งานกดได้)</h1>
+  <h1>📘 Simple Harmonic Motion Calculator (เวอร์ชันสมบูรณ์ 2025)</h1>
 
   <div class="box">
     <button onclick="showHelp()">📖 ดูวิธีใช้งาน</button>
@@ -75,16 +74,14 @@
   <div id="result" class="box"></div>
 
   <div id="helpModal">
-    <h2>📘 วิธีใช้งานเต็ม ๆ</h2>
-    <p>โหมดสภาวะเดียว → ใส่ค่าตามปกติ<br>
-    โหมดหลายสภาวะ → จะโชว์ 2 สภาวะ<br>
-    โปรแกรมจะคำนวณค่าที่ขาดให้อัตโนมัติทุกตัวในแต่ละสภาวะ<br>
-    และแสดงอัตราส่วน (state2 / state1) ทุกตัว + อัตราส่วนทฤษฎีจาก m,k,L,g</p>
+    <h2>📘 วิธีใช้งาน (เวอร์ชันเต็ม)</h2>
+    <p>• เลือกระบบและโหมด<br>
+    • ใส่ค่าที่รู้ → โปรแกรมคำนวณค่าที่เหลือให้อัตโนมัติ<br>
+    โหมดหลายสภาวะ → แสดงอัตราส่วนทุกตัว + อัตราส่วนทฤษฎีจาก m,k,L,g</p>
     <button onclick="closeHelp()">ปิด</button>
   </div>
 
   <script>
-    // ====================== กำหนดตัวแปรทั้งหมด ======================
     const varLabels = {
       m: 'มวล m (kg)',
       k: 'สปริง k (N/m)',
@@ -110,7 +107,6 @@
 
     const allVars = Object.keys(varLabels);
 
-    // ====================== สร้างช่องใส่ค่า ======================
     function createStateRow(stateNum) {
       const div = document.createElement('div');
       div.className = 'state-row';
@@ -127,7 +123,7 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `state${stateNum}_${key}`;
-        input.placeholder = '0';  // เพื่อง่ายต่อการใส่
+        input.placeholder = '0';
 
         group.appendChild(label);
         group.appendChild(input);
@@ -137,7 +133,6 @@
       return div;
     }
 
-    // ====================== สลับโหมด ======================
     function updateMode() {
       const mode = document.getElementById('mode').value;
       const container = document.getElementById('stateContainer');
@@ -151,7 +146,6 @@
       updateVisibility();
     }
 
-    // ====================== ซ่อน k หรือ L ======================
     function updateVisibility() {
       const system = document.getElementById('system').value;
       const isSpring = system === 'spring';
@@ -159,7 +153,7 @@
       document.querySelectorAll('.var-group').forEach(group => {
         const input = group.querySelector('input');
         if (!input) return;
-        const key = input.id.split('_')[1]; // แก้ไขตรงนี้ให้ถูกต้อง ไม่มี typo
+        const key = input.id.split('_')[1];
         if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
           group.classList.add('hidden');
         } else {
@@ -168,12 +162,10 @@
       });
     }
 
-    // ====================== ฟังก์ชันคำนวณหลัก (ยาวเต็ม) ======================
     function calculateState(inputs, system) {
       let result = { ...inputs };
       let explanation = '';
 
-      // ค่าเริ่มต้น
       if (system === 'pendulum' && !result.g) {
         result.g = 9.81;
         explanation += `ใช้ g = 9.81 m/s² (ค่าเริ่มต้น)\n`;
@@ -189,7 +181,6 @@
         changed = false;
         iterations++;
 
-        // ---------- ความสัมพันธ์พื้นฐาน T ↔ f ↔ ω ----------
         if ('f' in result && !('T' in result)) { result.T = 1 / result.f; explanation += `T = 1/f = ${result.T.toFixed(6)} s\n`; changed = true; }
         if ('T' in result && !('f' in result)) { result.f = 1 / result.T; explanation += `f = 1/T = ${result.f.toFixed(6)} Hz\n`; changed = true; }
         if ('omega' in result && !('T' in result)) { result.T = 2 * Math.PI / result.omega; explanation += `T = 2π/ω = ${result.T.toFixed(6)} s\n`; changed = true; }
@@ -197,22 +188,18 @@
         if ('f' in result && !('omega' in result)) { result.omega = 2 * Math.PI * result.f; explanation += `ω = 2πf = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
         if ('omega' in result && !('f' in result)) { result.f = result.omega / (2 * Math.PI); explanation += `f = ω/(2π) = ${result.f.toFixed(6)} Hz\n`; changed = true; }
 
-        // ---------- ระบบสปริง ----------
         if (system === 'spring') {
           if ('k' in result && 'm' in result && !('omega' in result)) { result.omega = Math.sqrt(result.k / result.m); explanation += `ω = √(k/m) = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
           if ('omega' in result && 'm' in result && !('k' in result)) { result.k = result.m * result.omega**2; explanation += `k = m ω² = ${result.k.toFixed(6)} N/m\n`; changed = true; }
           if ('omega' in result && 'k' in result && !('m' in result)) { result.m = result.k / result.omega**2; explanation += `m = k / ω² = ${result.m.toFixed(6)} kg\n`; changed = true; }
           if ('k' in result && 'x' in result && !('PE' in result)) { result.PE = 0.5 * result.k * result.x**2; explanation += `PE = ½ k x² = ${result.PE.toFixed(6)} J\n`; changed = true; }
           if ('k' in result && 'x' in result && !('sigmaF' in result)) { result.sigmaF = -result.k * result.x; explanation += `F = -k x = ${result.sigmaF.toFixed(6)} N\n`; changed = true; }
-        }
-        // ---------- ระบบลูกตุ้ม ----------
-        else {
+        } else {
           if ('L' in result && 'g' in result && !('omega' in result)) { result.omega = Math.sqrt(result.g / result.L); explanation += `ω = √(g/L) = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
           if ('omega' in result && 'g' in result && !('L' in result)) { result.L = result.g / result.omega**2; explanation += `L = g/ω² = ${result.L.toFixed(6)} m\n`; changed = true; }
           if ('omega' in result && 'L' in result && !('g' in result)) { result.g = result.L * result.omega**2; explanation += `g = L ω² = ${result.g.toFixed(6)} m/s²\n`; changed = true; }
         }
 
-        // ---------- ค่าอื่น ๆ ----------
         if ('omega' in result && 'A' in result && !('Vmax' in result)) { result.Vmax = result.omega * result.A; explanation += `Vmax = ωA = ${result.Vmax.toFixed(6)} m/s\n`; changed = true; }
         if ('Vmax' in result && 'omega' in result && !('A' in result)) { result.A = result.Vmax / result.omega; explanation += `A = Vmax/ω = ${result.A.toFixed(6)} m\n`; changed = true; }
         if ('omega' in result && 'A' in result && !('a_max' in result)) { result.a_max = result.omega**2 * result.A; explanation += `a_max = ω²A = ${result.a_max.toFixed(6)} m/s²\n`; changed = true; }
@@ -226,15 +213,13 @@
         if ('omega' in result && 'x' in result && !('a' in result)) { result.a = -result.omega**2 * result.x; explanation += `a = -ω²x = ${result.a.toFixed(6)} m/s²\n`; changed = true; }
         if ('m' in result && 'omega' in result && 'x' in result && !('sigmaF' in result)) { result.sigmaF = -result.m * result.omega**2 * result.x; explanation += `F = -m ω² x = ${result.sigmaF.toFixed(6)} N\n`; changed = true; }
 
-        // v จากพลังงาน (magnitude)
         if ('omega' in result && 'A' in result && 'x' in result && !('v' in result)) {
           const vMag = result.omega * Math.sqrt(Math.max(0, result.A**2 - result.x**2));
-          result.v = vMag; // magnitude ก่อน ถ้ามีเฟสจะทับด้วยค่าที่มีเครื่องหมาย
+          result.v = vMag;
           explanation += `|v| = ω √(A²−x²) = ${vMag.toFixed(6)} m/s\n`;
           changed = true;
         }
 
-        // จากเวลา + เฟส
         if ('omega' in result && 't' in result && 'phi' in result && !('Phi' in result)) { result.Phi = result.omega * result.t + result.phi; explanation += `Φ = ωt + φ = ${result.Phi.toFixed(6)} rad\n`; changed = true; }
         if ('A' in result && 'Phi' in result && !('x' in result)) { result.x = result.A * Math.cos(result.Phi); explanation += `x = A cos(Φ) = ${result.x.toFixed(6)} m\n`; changed = true; }
         if ('omega' in result && 'A' in result && 'Phi' in result && !('v' in result)) { result.v = -result.omega * result.A * Math.sin(result.Phi); explanation += `v = -ω A sin(Φ) = ${result.v.toFixed(6)} m/s\n`; changed = true; }
@@ -244,7 +229,6 @@
       return { result, explanation };
     }
 
-    // ====================== ปุ่มคำนวณ ======================
     function calculate() {
       const mode = document.getElementById('mode').value;
       const system = document.getElementById('system').value;
@@ -265,7 +249,6 @@
         explanations.push(explanation);
       }
 
-      // ====================== แสดงผล ======================
       let html = `<h3>ผลลัพธ์ — ${system === 'spring' ? 'สปริง' : 'ลูกตุ้ม'} (${mode === 'single' ? 'สภาวะเดียว' : 'หลายสภาวะ'})</h3>`;
 
       results.forEach((res, idx) => {
@@ -281,7 +264,6 @@
         html += `<pre>${explanations[idx] || 'ไม่มีขั้นตอนเพิ่มเติม'}</pre><br>`;
       });
 
-      // ---------- อัตราส่วน (เฉพาะ multi mode) ----------
       if (mode === 'multi') {
         html += '<h4 style="color:#d4380d;">🌟 อัตราส่วนทุกตัวแปร (สภาวะ 2 ÷ สภาวะ 1)</h4>';
         html += '<table class="ratio-table"><tr><th>ตัวแปร</th><th>ค่า อัตราส่วน (2/1)</th></tr>';
@@ -297,7 +279,6 @@
         });
         html += '</table>';
 
-        // อัตราส่วนทฤษฎี
         let ratioExp = '\nอัตราส่วนทฤษฎีจากพารามิเตอร์หลัก:\n';
         if (system === 'spring' && results[0].m && results[0].k && results[1].m && results[1].k) {
           const r_m = results[1].m / results[0].m;
@@ -333,8 +314,7 @@
     function showHelp() { document.getElementById('helpModal').style.display = 'block'; }
     function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 
-    // เริ่มต้น
-    updateMode(); // สร้างช่องใส่ค่าให้เลย
+    updateMode();
     updateVisibility();
   </script>
 </body>
