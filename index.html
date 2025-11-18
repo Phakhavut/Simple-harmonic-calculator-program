@@ -1,321 +1,321 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8"/>
-  <title>Simple Harmonic Motion Calculator (เวอร์ชันสมบูรณ์ + สะอาดสุด)</title>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; margin: 18px; background: #f7f9fb; color: #111; }
-    h1 { margin-bottom: 6px; }
-    .box { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 14px; }
-    h3 { margin-top: 0; }
-    label { display: inline-block; width: 160px; font-weight: bold; font-size: 0.9em; }
-    input[type="text"] { width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; margin-right: 4px; }
-    button { padding: 8px 12px; margin: 4px; background: #1677ff; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    button:hover { background: #0d5eff; }
-    .state-row { margin-bottom: 16px; padding: 12px; border: 1px solid #e6eef6; border-radius: 6px; background: #f9fcff; }
-    .vars-container { display: flex; flex-wrap: wrap; gap: 8px; }
-    .var-group { display: inline-block; margin: 4px 6px; vertical-align: top; min-width: 170px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    td, th { border: 1px solid #e6eef6; padding: 8px; text-align: center; }
-    th { background: #f0f8ff; }
-    #result { display: none; }
-    select { width: 300px; padding: 5px; }
-    .hidden { display: none !important; }
-    #helpModal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 25px;
-      border: 1px solid #ccc;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      z-index: 1000;
-      max-height: 90vh;
-      max-width: 90vw;
-      overflow: auto;
-      border-radius: 10px;
-    }
-    .ratio-table th { background: #fff3cd; }
-    pre { background: #f8f8f8; padding: 12px; border-radius: 6px; white-space: pre-wrap; }
-  </style>
+  <meta charset="utf-8"/>
+  <title>Simple Harmonic Motion Calculator (เวอร์ชันสมบูรณ์ + สะอาดสุด)</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 18px; background: #f7f9fb; color: #111; }
+    h1 { margin-bottom: 6px; }
+    .box { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 14px; }
+    h3 { margin-top: 0; }
+    label { display: inline-block; width: 160px; font-weight: bold; font-size: 0.9em; }
+    input[type="text"] { width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; margin-right: 4px; }
+    button { padding: 8px 12px; margin: 4px; background: #1677ff; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #0d5eff; }
+    .state-row { margin-bottom: 16px; padding: 12px; border: 1px solid #e6eef6; border-radius: 6px; background: #f9fcff; }
+    .vars-container { display: flex; flex-wrap: wrap; gap: 8px; }
+    .var-group { display: inline-block; margin: 4px 6px; vertical-align: top; min-width: 170px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td, th { border: 1px solid #e6eef6; padding: 8px; text-align: center; }
+    th { background: #f0f8ff; }
+    #result { display: none; }
+    select { width: 300px; padding: 5px; }
+    .hidden { display: none !important; }
+    #helpModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 25px;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      z-index: 1000;
+      max-height: 90vh;
+      max-width: 90vw;
+      overflow: auto;
+      border-radius: 10px;
+    }
+    .ratio-table th { background: #fff3cd; }
+    pre { background: #f8f8f8; padding: 12px; border-radius: 6px; white-space: pre-wrap; }
+  </style>
 </head>
 <body>
-  <h1>📘 Simple Harmonic Motion Calculator (เวอร์ชันสมบูรณ์ 2025)</h1>
+  <h1>📘 Simple Harmonic Motion Calculator (เวอร์ชันสมบูรณ์ 2025)</h1>
 
-  <div class="box">
-    <button onclick="showHelp()">📖 ดูวิธีใช้งาน</button>
-    <button onclick="clearAll()">🧹 ล้างทั้งหมด</button>
-  </div>
+  <div class="box">
+    <button onclick="showHelp()">📖 ดูวิธีใช้งาน</button>
+    <button onclick="clearAll()">🧹 ล้างทั้งหมด</button>
+  </div>
 
-  <div class="box">
-    <h3>📝 ใส่ข้อมูล</h3>
-    <div>
-      <label>ระบบ:</label>
-      <select id="system" onchange="updateVisibility()">
-        <option value="spring">สปริง (Spring)</option>
-        <option value="pendulum">ลูกตุ้ม (Pendulum)</option>
-      </select>
-      &nbsp;&nbsp;
-      <label>โหมด:</label>
-      <select id="mode" onchange="updateMode()">
-        <option value="single">สภาวะเดียว (Single State)</option>
-        <option value="multi">หลายสภาวะ (อัตราส่วน)</option>
-      </select>
-    </div>
+  <div class="box">
+    <h3>📝 ใส่ข้อมูล</h3>
+    <div>
+      <label>ระบบ:</label>
+      <select id="system" onchange="updateVisibility()">
+        <option value="spring">สปริง (Spring)</option>
+        <option value="pendulum">ลูกตุ้ม (Pendulum)</option>
+      </select>
+      &nbsp;&nbsp;
+      <label>โหมด:</label>
+      <select id="mode" onchange="updateMode()">
+        <option value="single">สภาวะเดียว (Single State)</option>
+        <option value="multi">หลายสภาวะ (อัตราส่วน)</option>
+      </select>
+    </div>
 
-    <div id="stateContainer"></div>
+    <div id="stateContainer"></div>
 
-    <br><br>
-    <button onclick="calculate()" style="padding: 10px 30px; font-size: 1.1em;">⚙️ คำนวณเดี๋ยวนี้</button>
-  </div>
+    <br><br>
+    <button onclick="calculate()" style="padding: 10px 30px; font-size: 1.1em;">⚙️ คำนวณเดี๋ยวนี้</button>
+  </div>
 
-  <div id="result" class="box"></div>
+  <div id="result" class="box"></div>
 
-  <div id="helpModal">
-    <h2>📘 วิธีใช้งาน (เวอร์ชันเต็ม)</h2>
-    <p>• เลือกระบบและโหมด<br>
-    • ใส่ค่าที่รู้ → โปรแกรมคำนวณค่าที่เหลือให้อัตโนมัติ<br>
-    โหมดหลายสภาวะ → แสดงอัตราส่วนทุกตัว + อัตราส่วนทฤษฎีจาก m,k,L,g</p>
-    <button onclick="closeHelp()">ปิด</button>
-  </div>
+  <div id="helpModal">
+    <h2>📘 วิธีใช้งาน (เวอร์ชันเต็ม)</h2>
+    <p>• เลือกระบบและโหมด<br>
+    • ใส่ค่าที่รู้ → โปรแกรมคำนวณค่าที่เหลือให้อัตโนมัติ<br>
+    โหมดหลายสภาวะ → แสดงอัตราส่วนทุกตัว + อัตราส่วนทฤษฎีจาก m,k,L,g</p>
+    <button onclick="closeHelp()">ปิด</button>
+  </div>
 
-  <script>
-    const varLabels = {
-      m: 'มวล m (kg)',
-      k: 'สปริง k (N/m)',
-      L: 'ความยาว L (m)',
-      g: 'แรงโน้มถ่วง g (m/s²)',
-      sigmaF: 'แรงดึงกลับ F (N)',
-      x: 'การกระจัด x (m)',
-      v: 'ความเร็ว v (m/s)',
-      a: 'ความเร่ง a (m/s²)',
-      A: 'แอมพลิจูด A (m)',
-      Vmax: 'ความเร็วสูงสุด Vmax (m/s)',
-      a_max: 'ความเร่งสูงสุด a_max (m/s²)',
-      KE: 'พลังงานจลน์ KE (J)',
-      PE: 'พลังงานศักย์ PE (J)',
-      E: 'พลังงานรวม E (J)',
-      omega: 'ความถี่เชิงมุม ω (rad/s)',
-      f: 'ความถี่ f (Hz)',
-      T: 'คาบ T (s)',
-      t: 'เวลา t (s)',
-      phi: 'เฟสเริ่มต้น φ (rad)',
-      Phi: 'เฟสทั้งหมด Φ (rad)'
-    };
+  <script>
+    const varLabels = {
+      m: 'มวล m (kg)',
+      k: 'สปริง k (N/m)',
+      L: 'ความยาว L (m)',
+      g: 'แรงโน้มถ่วง g (m/s²)',
+      sigmaF: 'แรงดึงกลับ F (N)',
+      x: 'การกระจัด x (m)',
+      v: 'ความเร็ว v (m/s)',
+      a: 'ความเร่ง a (m/s²)',
+      A: 'แอมพลิจูด A (m)',
+      Vmax: 'ความเร็วสูงสุด Vmax (m/s)',
+      a_max: 'ความเร่งสูงสุด a_max (m/s²)',
+      KE: 'พลังงานจลน์ KE (J)',
+      PE: 'พลังงานศักย์ PE (J)',
+      E: 'พลังงานรวม E (J)',
+      omega: 'ความถี่เชิงมุม ω (rad/s)',
+      f: 'ความถี่ f (Hz)',
+      T: 'คาบ T (s)',
+      t: 'เวลา t (s)',
+      phi: 'เฟสเริ่มต้น φ (rad)',
+      Phi: 'เฟสทั้งหมด Φ (rad)'
+    };
 
-    const allVars = Object.keys(varLabels);
+    const allVars = Object.keys(varLabels);
 
-    function createStateRow(stateNum) {
-      const div = document.createElement('div');
-      div.className = 'state-row';
-      div.innerHTML = `<h4 style="color:#1677ff;">สภาวะที่ ${stateNum}</h4><div class="vars-container"></div>`;
-      const container = div.querySelector('.vars-container');
+    function createStateRow(stateNum) {
+      const div = document.createElement('div');
+      div.className = 'state-row';
+      div.innerHTML = `<h4 style="color:#1677ff;">สภาวะที่ ${stateNum}</h4><div class="vars-container"></div>`;
+      const container = div.querySelector('.vars-container');
 
-      allVars.forEach(key => {
-        const group = document.createElement('div');
-        group.className = 'var-group';
+      allVars.forEach(key => {
+        const group = document.createElement('div');
+        group.className = 'var-group';
 
-        const label = document.createElement('label');
-        label.textContent = varLabels[key];
+        const label = document.createElement('label');
+        label.textContent = varLabels[key];
 
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = `state${stateNum}_${key}`;
-        input.placeholder = '0';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `state${stateNum}_${key}`;
+        input.placeholder = '0';
 
-        group.appendChild(label);
-        group.appendChild(input);
-        container.appendChild(group);
-      });
+        group.appendChild(label);
+        group.appendChild(input);
+        container.appendChild(group);
+      });
 
-      return div;
-    }
+      return div;
+    }
 
-    function updateMode() {
-      const mode = document.getElementById('mode').value;
-      const container = document.getElementById('stateContainer');
-      container.innerHTML = '';
-      const numStates = mode === 'single' ? 1 : 2;
+    function updateMode() {
+      const mode = document.getElementById('mode').value;
+      const container = document.getElementById('stateContainer');
+      container.innerHTML = '';
+      const numStates = mode === 'single' ? 1 : 2;
 
-      for (let i = 1; i <= numStates; i++) {
-        container.appendChild(createStateRow(i));
-      }
+      for (let i = 1; i <= numStates; i++) {
+        container.appendChild(createStateRow(i));
+      }
 
-      updateVisibility();
-    }
+      updateVisibility();
+    }
 
-    function updateVisibility() {
-      const system = document.getElementById('system').value;
-      const isSpring = system === 'spring';
+    function updateVisibility() {
+      const system = document.getElementById('system').value;
+      const isSpring = system === 'spring';
 
-      document.querySelectorAll('.var-group').forEach(group => {
-        const input = group.querySelector('input');
-        if (!input) return;
-        const key = input.id.split('_')[1];
-        if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
-          group.classList.add('hidden');
-        } else {
-          group.classList.remove('hidden');
-        }
-      });
-    }
+      document.querySelectorAll('.var-group').forEach(group => {
+        const input = group.querySelector('input');
+        if (!input) return;
+        const key = input.id.split('_')[1];
+        if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
+          group.classList.add('hidden');
+        } else {
+          group.classList.remove('hidden');
+        }
+      });
+    }
 
-    function calculateState(inputs, system) {
-      let result = { ...inputs };
-      let explanation = '';
+    function calculateState(inputs, system) {
+      let result = { ...inputs };
+      let explanation = '';
 
-      if (system === 'pendulum' && !result.g) {
-        result.g = 9.81;
-        explanation += `ใช้ g = 9.81 m/s² (ค่าเริ่มต้น)\n`;
-      }
-      if (result.t !== undefined && result.phi === undefined) {
-        result.phi = 0;
-        explanation += `สมมติ φ = 0 rad (เริ่มจากจุดสมดุล)\n`;
-      }
+      if (system === 'pendulum' && !result.g) {
+        result.g = 9.81;
+        explanation += `ใช้ g = 9.81 m/s² (ค่าเริ่มต้น)\n`;
+      }
+      if (result.t !== undefined && result.phi === undefined) {
+        result.phi = 0;
+        explanation += `สมมติ φ = 0 rad (เริ่มจากจุดสมดุล)\n`;
+      }
 
-      let changed = true;
-      let iterations = 0;
-      while (changed && iterations < 30) {
-        changed = false;
-        iterations++;
+      let changed = true;
+      let iterations = 0;
+      while (changed && iterations < 30) {
+        changed = false;
+        iterations++;
 
-        if ('f' in result && !('T' in result)) { result.T = 1 / result.f; explanation += `T = 1/f = ${result.T.toFixed(6)} s\n`; changed = true; }
-        if ('T' in result && !('f' in result)) { result.f = 1 / result.T; explanation += `f = 1/T = ${result.f.toFixed(6)} Hz\n`; changed = true; }
-        if ('omega' in result && !('T' in result)) { result.T = 2 * Math.PI / result.omega; explanation += `T = 2π/ω = ${result.T.toFixed(6)} s\n`; changed = true; }
-        if ('T' in result && !('omega' in result)) { result.omega = 2 * Math.PI / result.T; explanation += `ω = 2π/T = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
-        if ('f' in result && !('omega' in result)) { result.omega = 2 * Math.PI * result.f; explanation += `ω = 2πf = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
-        if ('omega' in result && !('f' in result)) { result.f = result.omega / (2 * Math.PI); explanation += `f = ω/(2π) = ${result.f.toFixed(6)} Hz\n`; changed = true; }
+        if ('f' in result && !('T' in result)) { result.T = 1 / result.f; explanation += `T = 1/f = ${result.T.toFixed(6)} s\n`; changed = true; }
+        if ('T' in result && !('f' in result)) { result.f = 1 / result.T; explanation += `f = 1/T = ${result.f.toFixed(6)} Hz\n`; changed = true; }
+        if ('omega' in result && !('T' in result)) { result.T = 2 * Math.PI / result.omega; explanation += `T = 2π/ω = ${result.T.toFixed(6)} s\n`; changed = true; }
+        if ('T' in result && !('omega' in result)) { result.omega = 2 * Math.PI / result.T; explanation += `ω = 2π/T = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
+        if ('f' in result && !('omega' in result)) { result.omega = 2 * Math.PI * result.f; explanation += `ω = 2πf = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
+        if ('omega' in result && !('f' in result)) { result.f = result.omega / (2 * Math.PI); explanation += `f = ω/(2π) = ${result.f.toFixed(6)} Hz\n`; changed = true; }
 
-        if (system === 'spring') {
-          if ('k' in result && 'm' in result && !('omega' in result)) { result.omega = Math.sqrt(result.k / result.m); explanation += `ω = √(k/m) = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
-          if ('omega' in result && 'm' in result && !('k' in result)) { result.k = result.m * result.omega**2; explanation += `k = m ω² = ${result.k.toFixed(6)} N/m\n`; changed = true; }
-          if ('omega' in result && 'k' in result && !('m' in result)) { result.m = result.k / result.omega**2; explanation += `m = k / ω² = ${result.m.toFixed(6)} kg\n`; changed = true; }
-          if ('k' in result && 'x' in result && !('PE' in result)) { result.PE = 0.5 * result.k * result.x**2; explanation += `PE = ½ k x² = ${result.PE.toFixed(6)} J\n`; changed = true; }
-          if ('k' in result && 'x' in result && !('sigmaF' in result)) { result.sigmaF = -result.k * result.x; explanation += `F = -k x = ${result.sigmaF.toFixed(6)} N\n`; changed = true; }
-        } else {
-          if ('L' in result && 'g' in result && !('omega' in result)) { result.omega = Math.sqrt(result.g / result.L); explanation += `ω = √(g/L) = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
-          if ('omega' in result && 'g' in result && !('L' in result)) { result.L = result.g / result.omega**2; explanation += `L = g/ω² = ${result.L.toFixed(6)} m\n`; changed = true; }
-          if ('omega' in result && 'L' in result && !('g' in result)) { result.g = result.L * result.omega**2; explanation += `g = L ω² = ${result.g.toFixed(6)} m/s²\n`; changed = true; }
-        }
+        if (system === 'spring') {
+          if ('k' in result && 'm' in result && !('omega' in result)) { result.omega = Math.sqrt(result.k / result.m); explanation += `ω = √(k/m) = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
+          if ('omega' in result && 'm' in result && !('k' in result)) { result.k = result.m * result.omega**2; explanation += `k = m ω² = ${result.k.toFixed(6)} N/m\n`; changed = true; }
+          if ('omega' in result && 'k' in result && !('m' in result)) { result.m = result.k / result.omega**2; explanation += `m = k / ω² = ${result.m.toFixed(6)} kg\n`; changed = true; }
+          if ('k' in result && 'x' in result && !('PE' in result)) { result.PE = 0.5 * result.k * result.x**2; explanation += `PE = ½ k x² = ${result.PE.toFixed(6)} J\n`; changed = true; }
+          if ('k' in result && 'x' in result && !('sigmaF' in result)) { result.sigmaF = -result.k * result.x; explanation += `F = -k x = ${result.sigmaF.toFixed(6)} N\n`; changed = true; }
+        } else {
+          if ('L' in result && 'g' in result && !('omega' in result)) { result.omega = Math.sqrt(result.g / result.L); explanation += `ω = √(g/L) = ${result.omega.toFixed(6)} rad/s\n`; changed = true; }
+          if ('omega' in result && 'g' in result && !('L' in result)) { result.L = result.g / result.omega**2; explanation += `L = g/ω² = ${result.L.toFixed(6)} m\n`; changed = true; }
+          if ('omega' in result && 'L' in result && !('g' in result)) { result.g = result.L * result.omega**2; explanation += `g = L ω² = ${result.g.toFixed(6)} m/s²\n`; changed = true; }
+        }
 
-        if ('omega' in result && 'A' in result && !('Vmax' in result)) { result.Vmax = result.omega * result.A; explanation += `Vmax = ωA = ${result.Vmax.toFixed(6)} m/s\n`; changed = true; }
-        if ('Vmax' in result && 'omega' in result && !('A' in result)) { result.A = result.Vmax / result.omega; explanation += `A = Vmax/ω = ${result.A.toFixed(6)} m\n`; changed = true; }
-        if ('omega' in result && 'A' in result && !('a_max' in result)) { result.a_max = result.omega**2 * result.A; explanation += `a_max = ω²A = ${result.a_max.toFixed(6)} m/s²\n`; changed = true; }
-        if ('a_max' in result && 'omega' in result && !('A' in result)) { result.A = result.a_max / result.omega**2; explanation += `A = a_max/ω² = ${result.A.toFixed(6)} m\n`; changed = true; }
+        if ('omega' in result && 'A' in result && !('Vmax' in result)) { result.Vmax = result.omega * result.A; explanation += `Vmax = ωA = ${result.Vmax.toFixed(6)} m/s\n`; changed = true; }
+        if ('Vmax' in result && 'omega' in result && !('A' in result)) { result.A = result.Vmax / result.omega; explanation += `A = Vmax/ω = ${result.A.toFixed(6)} m\n`; changed = true; }
+        if ('omega' in result && 'A' in result && !('a_max' in result)) { result.a_max = result.omega**2 * result.A; explanation += `a_max = ω²A = ${result.a_max.toFixed(6)} m/s²\n`; changed = true; }
+        if ('a_max' in result && 'omega' in result && !('A' in result)) { result.A = result.a_max / result.omega**2; explanation += `A = a_max/ω² = ${result.A.toFixed(6)} m\n`; changed = true; }
 
-        if ('m' in result && 'omega' in result && 'A' in result && !('E' in result)) { result.E = 0.5 * result.m * result.omega**2 * result.A**2; explanation += `E = ½ m ω² A² = ${result.E.toFixed(6)} J\n`; changed = true; }
-        if ('m' in result && 'omega' in result && 'x' in result && !('PE' in result)) { result.PE = 0.5 * result.m * result.omega**2 * result.x**2; explanation += `PE = ½ m ω² x² = ${result.PE.toFixed(6)} J\n`; changed = true; }
-        if ('m' in result && 'v' in result && !('KE' in result)) { result.KE = 0.5 * result.m * result.v**2; explanation += `KE = ½ m v² = ${result.KE.toFixed(6)} J\n`; changed = true; }
-        if ('KE' in result && 'PE' in result && !('E' in result)) { result.E = result.KE + result.PE; explanation += `E = KE + PE = ${result.E.toFixed(6)} J\n`; changed = true; }
+        if ('m' in result && 'omega' in result && 'A' in result && !('E' in result)) { result.E = 0.5 * result.m * result.omega**2 * result.A**2; explanation += `E = ½ m ω² A² = ${result.E.toFixed(6)} J\n`; changed = true; }
+        if ('m' in result && 'omega' in result && 'x' in result && !('PE' in result)) { result.PE = 0.5 * result.m * result.omega**2 * result.x**2; explanation += `PE = ½ m ω² x² = ${result.PE.toFixed(6)} J\n`; changed = true; }
+        if ('m' in result && 'v' in result && !('KE' in result)) { result.KE = 0.5 * result.m * result.v**2; explanation += `KE = ½ m v² = ${result.KE.toFixed(6)} J\n`; changed = true; }
+        if ('KE' in result && 'PE' in result && !('E' in result)) { result.E = result.KE + result.PE; explanation += `E = KE + PE = ${result.E.toFixed(6)} J\n`; changed = true; }
 
-        if ('omega' in result && 'x' in result && !('a' in result)) { result.a = -result.omega**2 * result.x; explanation += `a = -ω²x = ${result.a.toFixed(6)} m/s²\n`; changed = true; }
-        if ('m' in result && 'omega' in result && 'x' in result && !('sigmaF' in result)) { result.sigmaF = -result.m * result.omega**2 * result.x; explanation += `F = -m ω² x = ${result.sigmaF.toFixed(6)} N\n`; changed = true; }
+        if ('omega' in result && 'x' in result && !('a' in result)) { result.a = -result.omega**2 * result.x; explanation += `a = -ω²x = ${result.a.toFixed(6)} m/s²\n`; changed = true; }
+        if ('m' in result && 'omega' in result && 'x' in result && !('sigmaF' in result)) { result.sigmaF = -result.m * result.omega**2 * result.x; explanation += `F = -m ω² x = ${result.sigmaF.toFixed(6)} N\n`; changed = true; }
 
-        if ('omega' in result && 'A' in result && 'x' in result && !('v' in result)) {
-          const vMag = result.omega * Math.sqrt(Math.max(0, result.A**2 - result.x**2));
-          result.v = vMag;
-          explanation += `|v| = ω √(A²−x²) = ${vMag.toFixed(6)} m/s\n`;
-          changed = true;
-        }
+        if ('omega' in result && 'A' in result && 'x' in result && !('v' in result)) {
+          const vMag = result.omega * Math.sqrt(Math.max(0, result.A**2 - result.x**2));
+          result.v = vMag;
+          explanation += `|v| = ω √(A²−x²) = ${vMag.toFixed(6)} m/s\n`;
+          changed = true;
+        }
 
-        if ('omega' in result && 't' in result && 'phi' in result && !('Phi' in result)) { result.Phi = result.omega * result.t + result.phi; explanation += `Φ = ωt + φ = ${result.Phi.toFixed(6)} rad\n`; changed = true; }
-        if ('A' in result && 'Phi' in result && !('x' in result)) { result.x = result.A * Math.cos(result.Phi); explanation += `x = A cos(Φ) = ${result.x.toFixed(6)} m\n`; changed = true; }
-        if ('omega' in result && 'A' in result && 'Phi' in result && !('v' in result)) { result.v = -result.omega * result.A * Math.sin(result.Phi); explanation += `v = -ω A sin(Φ) = ${result.v.toFixed(6)} m/s\n`; changed = true; }
-        if ('omega' in result && 'A' in result && 'Phi' in result && !('a' in result)) { result.a = -result.omega**2 * result.A * Math.cos(result.Phi); explanation += `a = -ω² A cos(Φ) = ${result.a.toFixed(6)} m/s²\n`; changed = true; }
-      }
+        if ('omega' in result && 't' in result && 'phi' in result && !('Phi' in result)) { result.Phi = result.omega * result.t + result.phi; explanation += `Φ = ωt + φ = ${result.Phi.toFixed(6)} rad\n`; changed = true; }
+        if ('A' in result && 'Phi' in result && !('x' in result)) { result.x = result.A * Math.cos(result.Phi); explanation += `x = A cos(Φ) = ${result.x.toFixed(6)} m\n`; changed = true; }
+        if ('omega' in result && 'A' in result && 'Phi' in result && !('v' in result)) { result.v = -result.omega * result.A * Math.sin(result.Phi); explanation += `v = -ω A sin(Φ) = ${result.v.toFixed(6)} m/s\n`; changed = true; }
+        if ('omega' in result && 'A' in result && 'Phi' in result && !('a' in result)) { result.a = -result.omega**2 * result.A * Math.cos(result.Phi); explanation += `a = -ω² A cos(Φ) = ${result.a.toFixed(6)} m/s²\n`; changed = true; }
+      }
 
-      return { result, explanation };
-    }
+      return { result, explanation };
+    }
 
-    function calculate() {
-      const mode = document.getElementById('mode').value;
-      const system = document.getElementById('system').value;
-      const numStates = mode === 'single' ? 1 : 2;
+    function calculate() {
+      const mode = document.getElementById('mode').value;
+      const system = document.getElementById('system').value;
+      const numStates = mode === 'single' ? 1 : 2;
 
-      let results = [];
-      let explanations = [];
+      let results = [];
+      let explanations = [];
 
-      for (let i = 1; i <= numStates; i++) {
-        let inputs = {};
-        allVars.forEach(k => {
-          const el = document.getElementById(`state${i}_${k}`);
-          if (el && el.value.trim() !== '') inputs[k] = parseFloat(el.value);
-        });
+      for (let i = 1; i <= numStates; i++) {
+        let inputs = {};
+        allVars.forEach(k => {
+          const el = document.getElementById(`state${i}_${k}`);
+          if (el && el.value.trim() !== '') inputs[k] = parseFloat(el.value);
+        });
 
-        const { result, explanation } = calculateState(inputs, system);
-        results.push(result);
-        explanations.push(explanation);
-      }
+        const { result, explanation } = calculateState(inputs, system);
+        results.push(result);
+        explanations.push(explanation);
+      }
 
-      let html = `<h3>ผลลัพธ์ — ${system === 'spring' ? 'สปริง' : 'ลูกตุ้ม'} (${mode === 'single' ? 'สภาวะเดียว' : 'หลายสภาวะ'})</h3>`;
+      let html = `<h3>ผลลัพธ์ — ${system === 'spring' ? 'สปริง' : 'ลูกตุ้ม'} (${mode === 'single' ? 'สภาวะเดียว' : 'หลายสภาวะ'})</h3>`;
 
-      results.forEach((res, idx) => {
-        html += `<h4 style="color:#1677ff;">✔ สภาวะที่ ${idx + 1}</h4>`;
-        html += '<table><tr>';
-        allVars.forEach(k => html += `<th>${varLabels[k]}</th>`);
-        html += '</tr><tr>';
-        allVars.forEach(k => {
-          const val = res[k];
-          html += `<td>${val !== undefined && !isNaN(val) ? val.toFixed(4) : ''}</td>`;
-        });
-        html += '</tr></table>';
-        html += `<pre>${explanations[idx] || 'ไม่มีขั้นตอนเพิ่มเติม'}</pre><br>`;
-      });
+      results.forEach((res, idx) => {
+        html += `<h4 style="color:#1677ff;">✔ สภาวะที่ ${idx + 1}</h4>`;
+        html += '<table><tr>';
+        allVars.forEach(k => html += `<th>${varLabels[k]}</th>`);
+        html += '</tr><tr>';
+        allVars.forEach(k => {
+          const val = res[k];
+          html += `<td>${val !== undefined && !isNaN(val) ? val.toFixed(4) : ''}</td>`;
+        });
+        html += '</tr></table>';
+        html += `<pre>${explanations[idx] || 'ไม่มีขั้นตอนเพิ่มเติม'}</pre><br>`;
+      });
 
-      if (mode === 'multi') {
-        html += '<h4 style="color:#d4380d;">🌟 อัตราส่วนทุกตัวแปร (สภาวะ 2 ÷ สภาวะ 1)</h4>';
-        html += '<table class="ratio-table"><tr><th>ตัวแปร</th><th>ค่า อัตราส่วน (2/1)</th></tr>';
-        allVars.forEach(k => {
-          const v1 = results[0][k];
-          const v2 = results[1][k];
-          if (v1 && v2 && v1 !== 0) {
-            const ratio = v2 / v1;
-            if (isFinite(ratio)) {
-              html += `<tr><td>${varLabels[k]}</td><td>${ratio.toFixed(4)}</td></tr>`;
-            }
-          }
-        });
-        html += '</table>';
+      if (mode === 'multi') {
+        html += '<h4 style="color:#d4380d;">🌟 อัตราส่วนทุกตัวแปร (สภาวะ 2 ÷ สภาวะ 1)</h4>';
+        html += '<table class="ratio-table"><tr><th>ตัวแปร</th><th>ค่า อัตราส่วน (2/1)</th></tr>';
+        allVars.forEach(k => {
+          const v1 = results[0][k];
+          const v2 = results[1][k];
+          if (v1 && v2 && v1 !== 0) {
+            const ratio = v2 / v1;
+            if (isFinite(ratio)) {
+              html += `<tr><td>${varLabels[k]}</td><td>${ratio.toFixed(4)}</td></tr>`;
+            }
+          }
+        });
+        html += '</table>';
 
-        let ratioExp = '\nอัตราส่วนทฤษฎีจากพารามิเตอร์หลัก:\n';
-        if (system === 'spring' && results[0].m && results[0].k && results[1].m && results[1].k) {
-          const r_m = results[1].m / results[0].m;
-          const r_k = results[1].k / results[0].k;
-          const omegaRatioTheo = Math.sqrt(r_k / r_m);
-          const TRatioTheo = Math.sqrt(r_m / r_k);
-          ratioExp += `m₂/m₁ = ${r_m.toFixed(4)}\n`;
-          ratioExp += `k₂/k₁ = ${r_k.toFixed(4)}\n`;
-          ratioExp += `ω₂/ω₁ = √(k₂/k₁ ÷ m₂/m₁) = ${omegaRatioTheo.toFixed(4)}\n`;
-          ratioExp += `T₂/T₁ = √(m₂/m₁ ÷ k₂/k₁) = ${TRatioTheo.toFixed(4)}\n`;
-        } else if (system === 'pendulum' && results[0].L && results[0].g && results[1].L && results[1].g) {
-          const r_L = results[1].L / results[0].L;
-          const r_g = results[1].g / results[0].g;
-          const omegaRatioTheo = Math.sqrt(r_g / r_L);
-          const TRatioTheo = Math.sqrt(r_L / r_g);
-          ratioExp += `L₂/L₁ = ${r_L.toFixed(4)}\n`;
-          ratioExp += `g₂/g₁ = ${r_g.toFixed(4)}\n`;
-          ratioExp += `ω₂/ω₁ = √(g₂/g₁ ÷ L₂/L₁) = ${omegaRatioTheo.toFixed(4)}\n`;
-          ratioExp += `T₂/T₁ = √(L₂/L₁ ÷ g₂/g₁) = ${TRatioTheo.toFixed(4)}\n`;
-        }
-        html += `<pre style="background:#fff3cd;">${ratioExp}</pre>`;
-      }
+        let ratioExp = '\nอัตราส่วนทฤษฎีจากพารามิเตอร์หลัก:\n';
+        if (system === 'spring' && results[0].m && results[0].k && results[1].m && results[1].k) {
+          const r_m = results[1].m / results[0].m;
+          const r_k = results[1].k / results[0].k;
+          const omegaRatioTheo = Math.sqrt(r_k / r_m);
+          const TRatioTheo = Math.sqrt(r_m / r_k);
+          ratioExp += `m₂/m₁ = ${r_m.toFixed(4)}\n`;
+          ratioExp += `k₂/k₁ = ${r_k.toFixed(4)}\n`;
+          ratioExp += `ω₂/ω₁ = √(k₂/k₁ ÷ m₂/m₁) = ${omegaRatioTheo.toFixed(4)}\n`;
+          ratioExp += `T₂/T₁ = √(m₂/m₁ ÷ k₂/k₁) = ${TRatioTheo.toFixed(4)}\n`;
+        } else if (system === 'pendulum' && results[0].L && results[0].g && results[1].L && results[1].g) {
+          const r_L = results[1].L / results[0].L;
+          const r_g = results[1].g / results[0].g;
+          const omegaRatioTheo = Math.sqrt(r_g / r_L);
+          const TRatioTheo = Math.sqrt(r_L / r_g);
+          ratioExp += `L₂/L₁ = ${r_L.toFixed(4)}\n`;
+          ratioExp += `g₂/g₁ = ${r_g.toFixed(4)}\n`;
+          ratioExp += `ω₂/ω₁ = √(g₂/g₁ ÷ L₂/L₁) = ${omegaRatioTheo.toFixed(4)}\n`;
+          ratioExp += `T₂/T₁ = √(L₂/L₁ ÷ g₂/g₁) = ${TRatioTheo.toFixed(4)}\n`;
+        }
+        html += `<pre style="background:#fff3cd;">${ratioExp}</pre>`;
+      }
 
-      document.getElementById('result').innerHTML = html;
-      document.getElementById('result').style.display = 'block';
-    }
+      document.getElementById('result').innerHTML = html;
+      document.getElementById('result').style.display = 'block';
+    }
 
-    function clearAll() {
-      document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
-      document.getElementById('result').style.display = 'none';
-    }
+    function clearAll() {
+      document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+      document.getElementById('result').style.display = 'none';
+    }
 
-    function showHelp() { document.getElementById('helpModal').style.display = 'block'; }
-    function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
+    function showHelp() { document.getElementById('helpModal').style.display = 'block'; }
+    function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 
-    updateMode();
-    updateVisibility();
-  </script>
+    updateMode();
+    updateVisibility();
+  </script>
 </body>
 </html>
