@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="utf-8"/>
-  <title>Simple Harmonic Motion Calculator (เวอร์ชันเต็มสุด ๆ จริง ๆ ครบทุกบรรทัด ไม่มีตัด)</title>
+  <title>Simple Harmonic Motion Calculator (เวอร์ชันแก้ไขแล้ว - ช่องใส่ค่ากลับมา + วิธีใช้งานกดได้)</title>
   <style>
     body { font-family: Arial, Helvetica, sans-serif; margin: 18px; background: #f7f9fb; color: #111; }
     h1 { margin-bottom: 6px; }
@@ -43,7 +43,7 @@
   </style>
 </head>
 <body>
-  <h1>📘 Simple Harmonic Calculator (เวอร์ชันเต็มยาวสุด ๆ 2025)</h1>
+  <h1>📘 Simple Harmonic Calculator (เวอร์ชันแก้ไขแล้ว - ช่องใส่ค่ากลับมา + วิธีใช้งานกดได้)</h1>
 
   <div class="box">
     <button onclick="showHelp()">📖 ดูวิธีใช้งาน</button>
@@ -159,7 +159,7 @@
       document.querySelectorAll('.var-group').forEach(group => {
         const input = group.querySelector('input');
         if (!input) return;
-        const key = input.id.split('_')[1')[1] || input.id.split('_2')[1]; // ดึง key
+        const key = input.id.split('_')[1]; // แก้ไขตรงนี้ให้ถูกต้อง ไม่มี typo
         if ((key === 'k' && !isSpring) || (key === 'L' && isSpring)) {
           group.classList.add('hidden');
         } else {
